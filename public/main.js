@@ -1,15 +1,15 @@
 const { BrowserWindow, app, ipcMain, dialog} = require('electron');
-
+const { PythonShell } = require("python-shell");
 
 // const Facade = require('../engine_facade/engine_facade')
 // require('@electron/remote/main').initialize()
 const path = require('path');
 
-
+let win = null;
 
 function createWindow() {
     // Create the browser window 
-    const win = new BrowserWindow({ 
+    win = new BrowserWindow({ 
         width: 800,
         height: 600, 
         webPreferences: {
@@ -20,13 +20,12 @@ function createWindow() {
             preload: path.join(__dirname, 'preload.js')
         }
     })
-
     win.loadURL('http://localhost:3000')
 }
 
 app.on('ready', createWindow)
 
-//Quit when all windows are closed 
+// Quit when all windows are closed 
 
 app.on('window-all-closed', function() {
     //On OS X applications and their menu bar stay active
@@ -61,14 +60,32 @@ ipcMain.on('fileExplorer', (_event, args) => {
     }).then(file => {
         // Stating whether dialog operation was
         // cancelled or not.
-        console.log('is file cancelled',file.canceled);
+        console.log('is file cancelled', file.canceled);
         if (!file.canceled) {
           // handle file input
-
             filePath = file.filePaths[0].toString(); 
             _event.returnValue = filePath;
         }  
     }).catch(err => {
         console.log(err)
     });
+})
+
+ipcMain.on('parser', (_event, filePath) => {
+    
+
+    var options = {
+        mode: 'text',
+        encoding: 'utf8',
+        scriptPath: path.join(__dirname, '/../engine/'),
+        pythonPath: path.join(__dirname, '/../engine/env/Scripts/python.exe'),
+        args: [filePath]
+    };
+    console.log(_event.senderFrame)
+    let parser = new PythonShell('test_parser.py', options);
+    parser.on('message', function(message){
+        // event.sender is the IpcMainEvent object sender (webContent object that send sent the 'parser' message)
+        _event.sender.send('parsePercentage', message);
+    })
+
 })
