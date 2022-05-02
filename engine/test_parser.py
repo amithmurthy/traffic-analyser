@@ -2,22 +2,25 @@ import sys
 import datetime
 from dpkt import pcap, pcapng
 from dpkt.ethernet import *
+from dpkt.ip import IP
+from dpkt.ip6 import IP6
+from dpkt.tcp import TCP
+from dpkt.udp import UDP
+from utils import mac_addr, inet_to_str
+import utils
 import os
 import math
+# from network import Network
 
 
-
-def run_dpkt(file):
+def run_dpkt(file_path):
     read_pkts = 0
-    limit = 50000
+    limit = 100
     count = 0
-    epochs = []
-    date_time = []
-    sys.stdout.flush()
+    network = Network(file_path)
     first_pkt_datetime = None
-    rel_ts = []
-    with open(file, 'rb') as f:
-        if '.pcapng' in file:
+    with open(file_path, 'rb') as f:
+        if '.pcapng' in file_path:
             reader = pcapng.Reader(f)
         else:
             reader = pcap.Reader(f)
@@ -31,25 +34,25 @@ def run_dpkt(file):
                 read_pkts += 1
                 print("%.2f" % (count / pkt_volume * 100))
                 sys.stdout.flush()
-                # if count == 1:
-                #     first_pkt_datetime = datetime.datetime.fromtimestamp(t)
-                # relative_timestamp = get_relative_timestamp(first_pkt_datetime, datetime.datetime.fromtimestamp(t))
-                # rel_ts.append(relative_timestamp)
-                # pkt_struct['relative_timestamp'] = relative_timestamp
-                # pkt_struct['ether_pkt'] = ether_pkt
-    
+                if count == 1:
+                    first_pkt_datetime = datetime.datetime.fromtimestamp(t)
+                relative_timestamp = get_relative_timestamp(first_pkt_datetime, datetime.datetime.fromtimestamp(t))
+                pkt_struct['relative_timestamp'] = relative_timestamp
+                pkt_struct['ether_pkt'] = ether_pkt
+                if not isinstance(ether_pkt.data, IP) and not isinstance(ether_pkt.data, IP6):
+                    continue
+                pkt_struct['ip_pkt'] = ether_pkt.data
+
+
+                
     sys.stdout.flush()
-    
-
-    # print(rel_ts)    
-
+    # print(rel_ts)
 
 def get_relative_timestamp(first_pkt_timestamp, curr_pkt_timestamp):
     return (curr_pkt_timestamp - first_pkt_timestamp).total_seconds()
-
+ 
 
 if __name__ == "__main__":
     file_path = sys.argv[1]
     sys.stdout.flush()
-    run_dpkt(file=file_path)
-
+    run_dpkt(file_path)

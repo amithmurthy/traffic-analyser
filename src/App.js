@@ -13,9 +13,6 @@ function App() {
 
   function openFileExplorer(){
     window.electron.filesAPI.getFileExplorer()
-    // window.electron.handle('test', (event,data) => function(event,data) {
-    //   console.log(data)
-    // })
     setHideProgressBar(false);
     window.electron.handle('parsePercentage', (event,data) => function(event,data) {
       console.log('renderer', data)
