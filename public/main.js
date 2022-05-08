@@ -78,12 +78,13 @@ ipcMain.on('parser', (_event, filePath) => {
         mode: 'text',
         encoding: 'utf8',
         scriptPath: path.join(__dirname, '/../engine/'),
-        pythonPath: path.join(__dirname, '/../engine/env/Scripts/python.exe'),
+        pythonPath: 'C:/Python39/python.exe',
         args: [filePath]
     };
-    console.log(_event.senderFrame)
+    console.log('ipc main working')
     let parser = new PythonShell('test_parser.py', options);
     parser.on('message', function(message){
+        console.log(message)
         // event.sender is the IpcMainEvent object sender (webContent object that send sent the 'parser' message)
         _event.sender.send('parsePercentage', message);
     })
