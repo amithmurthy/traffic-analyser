@@ -1,26 +1,56 @@
 import networkx as nx
+from soupsieve import select
 # import matplotlib.pyplot as plt
 from node import Node
+
 
 class Network:
     """Class handles graph based feature analysis and derives from networkx Graph class behaviors/property (i.e., composite of the nx.Graph() class)"""
     def __init__(self, network_trace_file):
-        self.network_graph = nx.MultiDiGraph()
+        self.Network = nx.MultiDiGraph()
         self.network_trace_file = network_trace_file
-        self.flow_table = {}  # Flow.id: Flow.traffic reference store for all transport layer traffic 
+        self.flow_table = {}  # Flow.id aka Flow 5-tuple: Flow() object  
         self.mac_to_ip = {}
+        self.first_pkt_datetime = None
+        self.read_pkts = 0
+        self.nodes = {} # {mac_addr: Node() object, mac_addr: Node() object ....}
+        self.network_traffic = {}
 
-    def set_ip_to_mac_map(self):
-        for node in self.Network.nodes:
-            for ip in node.ip_addrs:
-                self.ip_to_mac_map[ip] = node.mac_addr
+    def get_nodes(self):
+        return self.nodes
 
+    def set_node_traffic(self, mac_addr, pkt):
+        node_obj = self.get_node(mac_addr)
+        node_obj.set_traffic(pkt)
+    
+    def set_first_pkt_datetime(self, first_pkt_datetime):
+        self.first_pkt_datetime = first_pkt_datetime
+    
+    def get_first_pkt_datetime(self):
+        return self.first_pkt_datetime
 
-    def set_network_trace_obj(self, network_trace_obj):
-        self.network_trace_obj = network_trace_obj
-
+    def increment_read_pkts(self):
+        self.read_pkts += 1
+        
+    def print_read_pkts(self):
+        print(self.read_pkts)
+    
     def reset_network_trace_obj(self):
         self.network_trace_obj = None
+
+    def get_node(self, mac_addr):
+        """Checks if node is in dict: if in it returns else instantiates a new Node object and returns a reference to that"""
+        if mac_addr in self.nodes:
+            return self.nodes[mac_addr]
+        else:
+            self.nodes[mac_addr] = Node(mac_addr)
+            return self.nodes[mac_addr]
+        
+    def initiate_node_key(self, mac_addr):
+        self.network_traffic[mac_addr] = []
+    
+    def append_node_traffic(self, mac_addr, pkt):
+        self.network_traffic[mac_addr].append(pkt)
 
     def add_nodes_and_edges(self, database_pointer):
         self.add_nodes()
@@ -46,13 +76,7 @@ class Network:
         for node_mac_addr in node_mac_addresses:
             node_obj = Node(node_mac_addr)
             self.Network.add_node(node_obj)
-
-
-    def _load_node_traffic(self, node, database_pointer):
-        file_filter = '_' + self.network_trace_obj.file_name[:-5]
-        loaded_device_obj = node.load_device_traffic(file_filter, database_pointer)
-
-        return loaded_device_obj
+   
 
     def _set_flow_table(self, database_pointer):
         node_count = 0
@@ -64,17 +88,9 @@ class Network:
 
                     self.flow_table.update(node.get_flows(device_obj.flows))
 
-    def _is_internet_node_in_graph(self):
-        """ Iterate through GraphNetwork nodes to check its state"""
-        _is_internet = False
-        for node in self.Network.nodes:
-            if node.mac_addr == 'internet':
-                _is_internet = True
-        return _is_internet
 
-    def _add_internet_node(self):
-        internet_node = Node(mac_addr='internet')
-        self.Network.add_node(internet_node)
+
+   
 
     def _get_node(self, node_key):
         for n in self.Network.nodes:

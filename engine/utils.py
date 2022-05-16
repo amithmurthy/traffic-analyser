@@ -2,10 +2,12 @@
 Use DPKT to read in a pcap file and print out the contents of the packets
 This example is focused on the fields in the Ethernet Frame and IP packet
 """
+import time
 import dpkt
 import datetime
 import socket
 from dpkt.compat import compat_ord
+import pickle
 
 def mac_addr(address):
     """Convert a MAC address to a readable/printable string
@@ -33,3 +35,24 @@ def inet_to_str(inet):
     except ValueError:
         return socket.inet_ntop(socket.AF_INET6, inet)
 
+def pickle_obj(name, obj):
+    with open(name + '.pickle', 'wb') as f:
+        pickle.dump(obj,f)
+    
+def unpickle_obj(input_pickle):
+    with open(input_pickle, 'rb') as f:
+        return pickle.load(f)
+
+# def timeit(f):
+    
+#     def timed(*args, **kw):
+
+#         ts = time.time()
+#         result = f(*args, **kw)
+#         te = time.time()
+
+#         print('func:%r args:[%r, %r] took: %2.4f sec' % \
+#           (f.__name__, args, kw, te-ts))
+#         return result
+
+#     return timed
