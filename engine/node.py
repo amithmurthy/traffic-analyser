@@ -7,14 +7,24 @@ class Node:
         self.mac_addr = mac_addr
         self.name = None
         self.ip_addrs = []
-        self.traffic = [] # List of pkt_structs (ingress and egress) 
         self.is_active = None
-        self.inputs_flows = None
-        self.output_flows = None
-        self.flows = []
+        self.input_flows = []
+        self.output_flows = []
+        self.all_flows = []
     
-    def set_traffic(self, pkt):
-        self.traffic.append(pkt)
+    def configure_input_flow(self, flow):
+        """Appends flow object reference to input flows list and sets the dst_node mac_addr (Node id) in Flow obj"""
+        self.input_flows.append(flow)
+        flow.dst_node = self.mac_addr
+
+    def configure_output_flow(self, flow):
+        """Appends flow object reference to output flows list and sets the dst_node mac_addr (Node id) in Flow obj"""
+        self.output_flows.append(flow)
+        flow.src_node = self.mac_addr
+    
+    def check_ip_addr(self, ip_addr):
+        if ip_addr not in self.ip_addrs:
+            self.ip_addrs.append(ip_addr)
 
     # def set_directional_flows(self):
 

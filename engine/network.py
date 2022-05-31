@@ -1,11 +1,10 @@
 import networkx as nx
-from soupsieve import select
+from flow import Flow
 # import matplotlib.pyplot as plt
 from node import Node
 
-
 class Network:
-    """Class handles graph based feature analysis and derives from networkx Graph class behaviors/property (i.e., composite of the nx.Graph() class)"""
+    """ Class handles graph based feature analysis and derives from networkx Graph class behaviors/property (i.e., composite of the nx.Graph() class)"""
     def __init__(self, network_trace_file):
         self.Network = nx.MultiDiGraph()
         self.network_trace_file = network_trace_file
@@ -15,6 +14,38 @@ class Network:
         self.read_pkts = 0
         self.nodes = {} # {mac_addr: Node() object, mac_addr: Node() object ....}
         self.network_traffic = {}
+
+
+    def sort_flow_traffic(self, flow_tuple, pkt_struct):
+        flow_obj = None
+        if flow_tuple in self.flow_table:
+            flow_obj = self.flow_table[flow_tuple]
+        else:
+            self.flow_table[flow_tuple] = Flow(flow_tuple)
+            flow_obj = self.flow_table[flow_tuple]
+            # Append flow obj reference to source and destination nodes
+            self._append_flow_to_nodes(src_mac=pkt_struct['eth_src'],dst_mac=pkt_struct['eth_dst'], flow_obj=flow_obj)
+        # Append pkt to flow object list
+        flow_obj.set_traffic(pkt_struct)
+        
+    def map_node_ip(self, pkt_struct):
+        """ Stores a nodes ip address to create a mac to ip map"""
+        def _check_node_ip_map(node, ip_addr):
+            node.check_ip_addr(ip_addr)
+        
+        _check_node_ip_map(self.get_node(pkt_struct['eth_src']), pkt_struct['ip_src'])
+        _check_node_ip_map(self.get_node(pkt_struct['eth_dst']), pkt_struct['ip_dst'])
+    
+    def print_flows(self):
+        print(self.flow_table)    
+    
+    def _append_flow_to_nodes(self, src_mac, dst_mac, flow_obj):
+        """Configures the relationship between Node and Flow objects"""
+        src_node = self.get_node(src_mac)
+        dst_node = self.get_node(dst_mac)
+        src_node.configure_output_flow(flow_obj)
+        dst_node.configure_input_flow(flow_obj)
+
 
     def get_nodes(self):
         return self.nodes
@@ -78,20 +109,6 @@ class Network:
             self.Network.add_node(node_obj)
    
 
-    def _set_flow_table(self, database_pointer):
-        node_count = 0
-        for node in self.Network.nodes:
-            node_count += 1
-            if node_count < len(self.Network.nodes):
-                device_obj = self._load_node_traffic(node, database_pointer)
-                if node.is_active:
-
-                    self.flow_table.update(node.get_flows(device_obj.flows))
-
-
-
-   
-
     def _get_node(self, node_key):
         for n in self.Network.nodes:
             if n.mac_addr == node_key:
@@ -138,6 +155,7 @@ class Network:
                     edge_list.append((edge_struct[0], edge_struct[1], edge_struct[2]['weight']))
         print("FINISHED")
         self.Network.add_weighted_edges_from(edge_list)
+
 
     # def visualise_network_graph(self):
     #     # Need to create a layout when doing

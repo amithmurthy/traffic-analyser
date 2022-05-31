@@ -8,6 +8,7 @@ import datetime
 import socket
 from dpkt.compat import compat_ord
 import pickle
+from copy import deepcopy
 
 def mac_addr(address):
     """Convert a MAC address to a readable/printable string
@@ -35,9 +36,15 @@ def inet_to_str(inet):
     except ValueError:
         return socket.inet_ntop(socket.AF_INET6, inet)
 
-def pickle_obj(name, obj):
-    with open(name + '.pickle', 'wb') as f:
-        pickle.dump(obj,f)
+def pickle_obj(name, obj, isNetworkProxy):
+    if isNetworkProxy:
+        n = deepcopy(obj)
+        print('object type',type(n))
+        with open(name + '.pickle', 'wb') as f:
+            pickle.dump(n,f)
+    else:
+        with open(name + '.pickle', 'wb') as f:
+            pickle.dump(obj,f)
     
 def unpickle_obj(input_pickle):
     with open(input_pickle, 'rb') as f:

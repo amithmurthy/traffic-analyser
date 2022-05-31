@@ -84,7 +84,6 @@ ipcMain.on('parser', (_event, filePath) => {
     console.log('ipc main working')
     let parser = new PythonShell('test_parser.py', options);
     parser.on('message', function(message){
-        console.log(message)
         // event.sender is the IpcMainEvent object sender (webContent object that send sent the 'parser' message)
         _event.sender.send('parsePercentage', message);
     })

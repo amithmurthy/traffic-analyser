@@ -16,6 +16,7 @@ from multiprocessing import Pool, Value
 from multiprocessing.managers import BaseManager, NamespaceProxy
 import time
 import types
+import json
 
 read_pkts = Value('i', 0)
 # first_pkt_datetime = Array(c_wchar, '')
@@ -58,34 +59,40 @@ def read_pkt_hdrs(network_inst, pkts):
         pkt_struct = {}
         relative_timestamp = get_relative_timestamp(first_pkt_datetime, datetime.datetime.fromtimestamp(t))
         pkt_struct['relative_timestamp'] = relative_timestamp
-        pkt_struct['ether_src'] = mac_addr(ether_pkt.src)
-        pkt_struct['ether_dst'] = mac_addr(ether_pkt.dst)
+        pkt_struct['eth_src'] = mac_addr(ether_pkt.src)
+        pkt_struct['eth_dst'] = mac_addr(ether_pkt.dst)
         if not isinstance(ether_pkt.data, IP) and not isinstance(ether_pkt.data, IP6):
             continue
         pkt_struct['ip_pkt'] = ether_pkt.data
         ip_pkt = ether_pkt.data
         pkt_struct['ip_src'] = inet_to_str(ip_pkt.src)
         pkt_struct['ip_dst'] = inet_to_str(ip_pkt.dst)
-
+        network_inst.map_node_ip(pkt_struct)
+        protocol = None
         if isinstance(ip_pkt.data, TCP) or isinstance(ip_pkt.data, UDP):
             transport_pkt = None
-            protocol = None
             if isinstance(ip_pkt, TCP):
                 transport_pkt = ip_pkt.data
                 protocol = 'TCP'
+                pkt_struct['flags'] = transport_pkt.flags
+                pkt_struct['win_size'] = transport_pkt.win
+                pkt_struct['ack'] = transport_pkt.ack
+                pkt_struct['payload_size'] = len(transport_pkt) 
             else:
                 transport_pkt = ip_pkt.data
                 protocol = 'UDP'
+                pkt_struct['payload_size'] = len(transport_pkt)
             set_ports(pkt_struct, transport_pkt)
             pkt_struct['transport_protocol'] = protocol
             flow_tuple = (pkt_struct['ip_src'], pkt_struct['ip_dst'], pkt_struct['sport'], pkt_struct['dport'], protocol)
-            # Append to flow traffic
-            # TODO: Only Flow objects should store the traffic data, Node and Network objects only store references to the flow objects -> this enables more flow-level commputations to be abstracted and handled by the flow object
         else:
             # support only tcp and udp for mvp -> so save ip traffic 
+            protocol = 'IP'
             pkt_struct['ip_len'] = ip_pkt.len if isinstance(ip_pkt, IP) else ip_pkt.plen
-            network_inst.set_node_traffic(pkt_struct['ether_src'], pkt_struct)
-            network_inst.set_node_traffic(pkt_struct['ether_dst'], pkt_struct)  
+            flow_tuple = (pkt_struct['ip_src'], pkt_struct['ip_dst'], protocol) 
+        
+        # Only Flow objects should store the traffic data, Node and Network objects only store references to the flow objects -> this enables more flow-level commputations to be abstracted and handled by the flow object
+        network_inst.sort_flow_traffic(flow_tuple, pkt_struct)
     
 def get_chunks(pkts, pkt_volume, n):
     return [pkts[i:i+n] for i in range(0, pkt_volume, n)]
@@ -98,7 +105,7 @@ def run_parsing(file_path, network_inst):
         else:
             reader = pcap.Reader(f)
         pkts = reader.readpkts() # Loads list of tuples (pkt info) into memory
-        pkts = pkts[:10]
+        # pkts = pkts[:10]
         pkt_volume = len(pkts)
         print(pkt_volume)
         n = math.floor(pkt_volume / 4)
@@ -118,53 +125,15 @@ def set_ports(pkt_struct, transport_pkt):
     pkt_struct['sport'] = transport_pkt.sport
     pkt_struct['dport'] = transport_pkt.dport
 
-def validate_multiprocess_output(file_path):
-    network = Network(file_path)
-    
-    with open(file_path, 'rb') as f:
-        if '.pcapng' in file_path:
-            reader = pcapng.Reader(f)
-        else:
-            reader = pcap.Reader(f)
-        pkts = reader.readpkts() # Loads list of tuples (pkt info) into memory
-        # pkts = pkts[:100000]
-        # print('pkts len',len(pkts))
-        first_pkt_datetime = datetime.datetime.fromtimestamp(pkts[0][0])
-        start = time.time()
-        for t, pkt in pkts:
-            ether_pkt = Ethernet(pkt)
-            pkt_struct = {}
-            relative_timestamp = get_relative_timestamp(first_pkt_datetime, datetime.datetime.fromtimestamp(t))
-            pkt_struct['relative_timestamp'] = relative_timestamp
-            pkt_struct['ether_src'] = mac_addr(ether_pkt.src)
-            pkt_struct['ether_dst'] = mac_addr(ether_pkt.dst)
-            
-            if not isinstance(ether_pkt.data, IP) and not isinstance(ether_pkt.data, IP6):
-                continue
-            ip_pkt = ether_pkt.data
-            pkt_struct['ip_src'] = inet_to_str(ip_pkt.src)
-            pkt_struct['ip_dst'] = inet_to_str(ip_pkt.dst)
 
-            if isinstance(ip_pkt.data, TCP):
-                tcp_pkt = ip_pkt.data
-                set_ports(pkt_struct, tcp_pkt)
-            elif isinstance(ip_pkt.data, UDP):
-                udp_pkt = ip_pkt.data
-                set_ports(pkt_struct, udp_pkt) 
-            else:
-                # support only tcp and udp for mvp -> so save ip traffic 
-                pkt_struct['ip_len'] = ip_pkt.len if isinstance(ip_pkt, IP) else ip_pkt.plen
-                network.set_node_traffic(pkt_struct['ether_src'], pkt_struct)
-                network.set_node_traffic(pkt_struct['ether_dst'], pkt_struct)
-                continue
-        end = time.time()
-        print('time', end - start)            
-    # pickle_obj(name='sequetial_nodes', obj=network.get_nodes())
-    # multiprocessed_nodes = unpickle_obj('nodes.pickle')
-    # sequential_nodes = network.get_nodes()
+def validate_network_obj():
+    multiprocessed_network_obj = unpickle_obj('network.pickle')
+    sequential_network_obj = unpickle_obj('network2.pickle')
 
-    # # print(multiprocessed_nodes)
-    # # print(sequential_nodes)
+    # Validate flows 
+    s_flows = list(sequential_network_obj.flow_table.keys())
+    m_flows = list(multiprocessed_network_obj.flow_table.keys())
+
 
     # for key in multiprocessed_nodes:
     #     m_node = multiprocessed_nodes[key]
@@ -178,21 +147,99 @@ def validate_multiprocess_output(file_path):
     #                 print('timestamp not equal')
     #     else:
     #         print('NOT EQUAL, FAILED') 
+    
 
+def pipe_graph_data(network):
+    graph_data = {
+        'nodes': [ {'id': mac_addr, 'label':mac_addr, 'title': mac_addr} for mac_addr in network.nodes],
+        'edges':[]
+    }
+    
+    for flow_id in network.flow_table:
+        flow = network.flow_table[flow_id]
+        edge = {'from':flow.src_node,'to':flow.dst_node}
+        graph_data['edges'].append(edge)
+    
 
+    print(json.dumps(graph_data))
+
+def parse_sequentially(file_path):
+    network = Network(file_path)
+    pkts_read = 0
+    with open(file_path, 'rb') as f:
+        if '.pcapng' in file_path:
+            reader = pcapng.Reader(f)
+        else:
+            reader = pcap.Reader(f)
+        pkts = reader.readpkts() # Loads list of tuples (pkt info) into memory
+        pkts = pkts[:1000]
+        pkt_volume = len(pkts)
+        # print('pkts len',len(pkts))
+        first_pkt_datetime = datetime.datetime.fromtimestamp(pkts[0][0])
+        start = time.time()
+        for t, pkt in pkts:
+            # print(pkts_read / pkt_volume * 100)
+            ether_pkt = Ethernet(pkt)
+            pkt_struct = {}
+            relative_timestamp = get_relative_timestamp(first_pkt_datetime, datetime.datetime.fromtimestamp(t))
+            pkt_struct['relative_timestamp'] = relative_timestamp
+            pkt_struct['eth_src'] = mac_addr(ether_pkt.src)
+            pkt_struct['eth_dst'] = mac_addr(ether_pkt.dst)
+            
+            if not isinstance(ether_pkt.data, IP) and not isinstance(ether_pkt.data, IP6):
+                continue
+            ip_pkt = ether_pkt.data
+            pkt_struct['ip_src'] = inet_to_str(ip_pkt.src)
+            pkt_struct['ip_dst'] = inet_to_str(ip_pkt.dst)
+            protocol = None
+            if isinstance(ip_pkt.data, TCP) or isinstance(ip_pkt.data, UDP):
+                transport_pkt = None
+                if isinstance(ip_pkt, TCP):
+                    transport_pkt = ip_pkt.data
+                    protocol = 'TCP'
+                    pkt_struct['flags'] = transport_pkt.flags
+                    pkt_struct['win_size'] = transport_pkt.win
+                    pkt_struct['ack'] = transport_pkt.ack
+                    pkt_struct['payload_size'] = len(transport_pkt) 
+                else:
+                    transport_pkt = ip_pkt.data
+                    protocol = 'UDP'
+                    pkt_struct['payload_size'] = len(transport_pkt)
+                set_ports(pkt_struct, transport_pkt)
+                pkt_struct['transport_protocol'] = protocol
+                flow_tuple = (pkt_struct['ip_src'], pkt_struct['ip_dst'], pkt_struct['sport'], pkt_struct['dport'], protocol)
+            else:
+                # support only tcp and udp for mvp -> so save ip traffic 
+                protocol = 'IP'
+                pkt_struct['ip_len'] = ip_pkt.len if isinstance(ip_pkt, IP) else ip_pkt.plen
+                flow_tuple = (pkt_struct['ip_src'], pkt_struct['ip_dst'], protocol) 
+            network.sort_flow_traffic(flow_tuple, pkt_struct)
+            pkts_read += 1
+        
+        end = time.time()
+        # print('time', end - start)             
+    pipe_graph_data(network)
+    # print('network instance size', sys.getsizeof(network))
+    # pickle_obj(name='network2', obj=network, isNetworkProxy=False)
+    
 
 def get_relative_timestamp(first_pkt_timestamp, curr_pkt_timestamp):
     return (curr_pkt_timestamp - first_pkt_timestamp).total_seconds()
 
+def validate_pickled_obj():
+    network_obj = unpickle_obj('network.pickle')
+    print(network_obj.flow_table)
 
 if __name__ == "__main__":
     file_path = sys.argv[1]
-    
+    # validate_pickled_obj()
     # NetworkProxy = Proxy(Network)
-    BaseManager.register('Network', Network) # if want to share class attributes:  BaseManager.register('Network', Network, NetworkProxy) 
-    manager = BaseManager()
-    manager.start()
-    network_inst = manager.Network(file_path)
-    run_parsing(file_path, network_inst)
-    # pickle_obj(name='nodes',obj=network_inst.get_nodes())
-    # validate_multiprocess_output(file_path)
+    # BaseManager.register('Network', Network) # if want to share class attributes:  BaseManager.register('Network', Network, NetworkProxy) 
+    # manager = BaseManager()
+    # manager.start()
+    # network_inst = manager.Network(file_path)
+    # run_parsing(file_path, network_inst)
+    # pickle_obj(name='network', obj=network_inst, isNetworkProxy=True)
+    parse_sequentially(file_path)
+    # validate_network_obj()
+

@@ -6,11 +6,10 @@ class Flow:
     def __init__(self, flow_tuple):
         self.tuple = flow_tuple  # Serves as an identifier
         self.key = self.get_key()
-        self.traffic = None
+        self.traffic = []
         self.edge_struct = None  # (n1, n2, object=edge_data)
-        self.src_node = self.tuple[0]
-        self.dst_node = self.tuple[1]
-        self.direction_at_nodes = {}
+        self.src_node = None
+        self.dst_node = None
         self.metadata = None  # {attribute: value}
         self.edge_data = {}
 
@@ -25,10 +24,10 @@ class Flow:
         hash_key = hashlib.md5(tuple.encode('utf-8')).hexdigest()
         return hash_key
 
-    def _set_flow_direction_at_nodes(self):
-        """As a flow can belong to 2 nodes, this function returns the direction of the flow by the node calling this function"""
-        self.direction_at_nodes[self.src_node] = 'output'
-        self.direction_at_nodes[self.dst_node] = 'input'
+    # def _set_flow_direction_at_nodes(self):
+    #     """As a flow can belong to 2 nodes, this function returns the direction of the flow by the node calling this function"""
+    #     self.direction_at_nodes[self.src_node] = 'output'
+    #     self.direction_at_nodes[self.dst_node] = 'input'
 
     def _get_edge_data(self):
         try:
@@ -82,6 +81,5 @@ class Flow:
         avg_pkt_size = self.metadata['total_bytes'] / self.metadata['total_pkts']
         return avg_pkt_size
 
-    def set_traffic(self, pkt_traffic):
-        assert type(pkt_traffic) is list
-        self.traffic = deepcopy(pkt_traffic)
+    def set_traffic(self, pkt):
+        self.traffic.append(pkt)
