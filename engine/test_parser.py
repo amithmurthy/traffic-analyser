@@ -150,6 +150,7 @@ def validate_network_obj():
     
 
 def pipe_graph_data(network):
+    print(network.nodes)
     graph_data = {
         'nodes': [ {'id': mac_addr, 'label':mac_addr, 'title': mac_addr} for mac_addr in network.nodes],
         'edges':[]
@@ -157,11 +158,22 @@ def pipe_graph_data(network):
     
     for flow_id in network.flow_table:
         flow = network.flow_table[flow_id]
-        edge = {'from':flow.src_node,'to':flow.dst_node}
-        graph_data['edges'].append(edge)
-    
-
+        edge = {'from':flow.src_node.mac_addr,'to':flow.dst_node.mac_addr} 
+        if edge not in graph_data['edges']:
+            graph_data['edges'].append(edge)
+        else:
+            continue
+    # std out returns data to PythonShell process in main (main.js Electron) process
     print(json.dumps(graph_data))
+
+def set_networkx_edges(network_inst):
+    print(len(list(network_inst.flow_table.keys())))
+    for flow_id in network_inst.flow_table:
+        flow_obj = network_inst.flow_table[flow_id]
+        # edge = (flow_obj.src_node, flow_obj.dst_node)
+        network_inst.GraphNetwork.add_edge(flow_obj.src_node,flow_obj.dst_node)
+        # print(edge)
+
 
 def parse_sequentially(file_path):
     network = Network(file_path)
@@ -172,7 +184,7 @@ def parse_sequentially(file_path):
         else:
             reader = pcap.Reader(f)
         pkts = reader.readpkts() # Loads list of tuples (pkt info) into memory
-        pkts = pkts[:1000]
+        # pkts = pkts[:1000]
         pkt_volume = len(pkts)
         # print('pkts len',len(pkts))
         first_pkt_datetime = datetime.datetime.fromtimestamp(pkts[0][0])
@@ -213,15 +225,19 @@ def parse_sequentially(file_path):
                 protocol = 'IP'
                 pkt_struct['ip_len'] = ip_pkt.len if isinstance(ip_pkt, IP) else ip_pkt.plen
                 flow_tuple = (pkt_struct['ip_src'], pkt_struct['ip_dst'], protocol) 
-            network.sort_flow_traffic(flow_tuple, pkt_struct)
-            pkts_read += 1
-        
+            # Send flow tuple and pkt struct to flow and node factory to sort the pkt into flow object and Node obj
+            network.flow_and_node_factory(flow_tuple, pkt_struct)
+            pkts_read += 1 
         end = time.time()
-        # print('time', end - start)             
+    print('time', end - start)             
+    
+    # pickle_obj(name='network2', obj=network, isNetworkProxy=False)
+    # set_networkx_edges(network)
+    # print(network.GraphNetwork)
     pipe_graph_data(network)
     # print('network instance size', sys.getsizeof(network))
-    # pickle_obj(name='network2', obj=network, isNetworkProxy=False)
     
+
 
 def get_relative_timestamp(first_pkt_timestamp, curr_pkt_timestamp):
     return (curr_pkt_timestamp - first_pkt_timestamp).total_seconds()
@@ -229,6 +245,8 @@ def get_relative_timestamp(first_pkt_timestamp, curr_pkt_timestamp):
 def validate_pickled_obj():
     network_obj = unpickle_obj('network.pickle')
     print(network_obj.flow_table)
+
+    
 
 if __name__ == "__main__":
     file_path = sys.argv[1]
@@ -242,4 +260,3 @@ if __name__ == "__main__":
     # pickle_obj(name='network', obj=network_inst, isNetworkProxy=True)
     parse_sequentially(file_path)
     # validate_network_obj()
-

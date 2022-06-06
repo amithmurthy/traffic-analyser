@@ -4,8 +4,18 @@ const { PythonShell } = require("python-shell");
 // const Facade = require('../engine_facade/engine_facade')
 // require('@electron/remote/main').initialize()
 const path = require('path');
+const { request } = require('http');
 
 let win = null;
+
+var pythonOptions = {
+    mode: 'text',
+    encoding: 'utf8',
+    scriptPath: path.join(__dirname, '/../engine/'),
+    pythonPath: 'C:/Python39/python.exe',
+    args: []
+};
+
 
 function createWindow() {
     // Create the browser window 
@@ -73,19 +83,26 @@ ipcMain.on('fileExplorer', (_event, args) => {
 
 ipcMain.on('parser', (_event, filePath) => {
     
-
-    var options = {
-        mode: 'text',
-        encoding: 'utf8',
-        scriptPath: path.join(__dirname, '/../engine/'),
-        pythonPath: 'C:/Python39/python.exe',
-        args: [filePath]
-    };
+    pythonOptions.args.push(filePath)
     console.log('ipc main working')
-    let parser = new PythonShell('test_parser.py', options);
+    let parser = new PythonShell('test_parser.py', pythonOptions);
     parser.on('message', function(message){
         // event.sender is the IpcMainEvent object sender (webContent object that send sent the 'parser' message)
         _event.sender.send('parsePercentage', message);
     })
+    
+})
 
+
+ipcMain.on('facade', (_event, request) =>{
+    
+    pythonOptions.args.pop();
+    pythonOptions.args.push(JSON.stringify(request));
+    let facade = new PythonShell('facade.py', pythonOptions);
+    // facade.send(request);
+    facade.on('message', function(message){
+        console.log(message);
+        _event.sender.send('facade', message);
+    })
+    
 })

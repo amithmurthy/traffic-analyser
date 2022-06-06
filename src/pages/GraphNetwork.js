@@ -1,5 +1,7 @@
 import Graph  from 'react-vis-network-graph';
 import { useLocation } from 'react-router-dom';
+import DenseAppBar from '../comps/NavBar';
+
 
 const GraphNetwork = () => {
     const location = useLocation();
@@ -32,26 +34,34 @@ const GraphNetwork = () => {
         autoResize: true
       }
     
-      const events = {
-        select: function(event) {
-          var {nodes, edges} = event;
-        }
-      };
+    const events = {
+    select: function(event) {
+        console.log('test');
+        var {nodes, edges} = event;
+        var request = {'node': nodes}
+        window.electron.facadeAPI.sendRequest(request);
+        window.electron.handle('facade', (event,data) => function(event,data) {
+            console.log(event);
+            console.log('node click event test');
+        })
+    }
+    };
+
 
 
     return (
-
+      
         <div style={{height:'100vh'}}>
+          <DenseAppBar></DenseAppBar>
             <Graph 
             graph={data}
             options={options}
             events={events}
-        />
+            />
         </div>
         
 
     )
-
 
 
 }

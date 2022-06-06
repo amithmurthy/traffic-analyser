@@ -47,6 +47,7 @@ def pickle_obj(name, obj, isNetworkProxy):
             pickle.dump(obj,f)
     
 def unpickle_obj(input_pickle):
+    print('unpickling')
     with open(input_pickle, 'rb') as f:
         return pickle.load(f)
 

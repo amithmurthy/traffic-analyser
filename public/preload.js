@@ -9,5 +9,10 @@ contextBridge.exposeInMainWorld('electron', {
             var _parser = ipcRenderer.send('parser', filePath);
         }
     },
-    handle: (channel, callable, event, data) => ipcRenderer.on(channel, callable(event, data))
+    handle: (channel, callable, event, data) => ipcRenderer.on(channel, callable(event, data)),
+    facadeAPI: {
+        sendRequest(request){
+            var facade = ipcRenderer.send('facade', request);
+        }
+    }
 })

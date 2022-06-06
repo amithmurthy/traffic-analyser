@@ -6,17 +6,16 @@ from node import Node
 class Network:
     """ Class handles graph based feature analysis and derives from networkx Graph class behaviors/property (i.e., composite of the nx.Graph() class)"""
     def __init__(self, network_trace_file):
-        self.Network = nx.MultiDiGraph()
+        self.GraphNetwork = nx.MultiDiGraph()
         self.network_trace_file = network_trace_file
         self.flow_table = {}  # Flow.id aka Flow 5-tuple: Flow() object  
         self.mac_to_ip = {}
         self.first_pkt_datetime = None
-        self.read_pkts = 0
         self.nodes = {} # {mac_addr: Node() object, mac_addr: Node() object ....}
-        self.network_traffic = {}
 
 
-    def sort_flow_traffic(self, flow_tuple, pkt_struct):
+    def flow_and_node_factory(self, flow_tuple, pkt_struct):
+        """Creational factory method to either create Node and Flow objects and correctly sort their structure - or store pkt_struct"""
         flow_obj = None
         if flow_tuple in self.flow_table:
             flow_obj = self.flow_table[flow_tuple]
@@ -43,8 +42,10 @@ class Network:
         """Configures the relationship between Node and Flow objects"""
         src_node = self.get_node(src_mac)
         dst_node = self.get_node(dst_mac)
-        src_node.configure_output_flow(flow_obj)
-        dst_node.configure_input_flow(flow_obj)
+        flow_obj.src_node = src_node
+        flow_obj.dst_node = dst_node
+        src_node.set_output_flow(flow_obj)
+        dst_node.set_input_flow(flow_obj)
 
 
     def get_nodes(self):
@@ -60,28 +61,14 @@ class Network:
     def get_first_pkt_datetime(self):
         return self.first_pkt_datetime
 
-    def increment_read_pkts(self):
-        self.read_pkts += 1
-        
-    def print_read_pkts(self):
-        print(self.read_pkts)
-    
-    def reset_network_trace_obj(self):
-        self.network_trace_obj = None
-
     def get_node(self, mac_addr):
-        """Checks if node is in dict: if in it returns else instantiates a new Node object and returns a reference to that"""
+        """Checks if node is in dict: if in it returns else instantiates a new Node object and returns a reference to that. This is strictly to use while parsing pcap file"""
         if mac_addr in self.nodes:
             return self.nodes[mac_addr]
         else:
             self.nodes[mac_addr] = Node(mac_addr)
+            self.GraphNetwork.add_node(self.nodes[mac_addr])
             return self.nodes[mac_addr]
-        
-    def initiate_node_key(self, mac_addr):
-        self.network_traffic[mac_addr] = []
-    
-    def append_node_traffic(self, mac_addr, pkt):
-        self.network_traffic[mac_addr].append(pkt)
 
     def add_nodes_and_edges(self, database_pointer):
         self.add_nodes()
@@ -106,13 +93,14 @@ class Network:
         node_mac_addresses = get_node_addrs()
         for node_mac_addr in node_mac_addresses:
             node_obj = Node(node_mac_addr)
-            self.Network.add_node(node_obj)
+            self.GraphNetwork.add_node(node_obj)
    
 
-    def _get_node(self, node_key):
-        for n in self.Network.nodes:
+    def _is_node(self, node_key):
+        for n in self.GraphNetwork.nodes:
             if n.mac_addr == node_key:
                 return n
+        return None
 
     def convert_ip_edge_to_node_objects(self, ip_edge_struct):
         src_ip = ip_edge_struct[0]
@@ -140,7 +128,7 @@ class Network:
         if not self._is_internet_node_in_graph():
             self._add_internet_node()
         edge_list = []
-        for node in self.Network.nodes:
+        for node in self.GraphNetwork.nodes:
             for flow_key in node.flows:
                 FlowObject = self.flow_table[flow_key]
                 # set edge struct
@@ -151,17 +139,18 @@ class Network:
                 if edge_struct[0] == edge_struct[1]:
                     continue
                 else:
-                    # self.Network.add_edge(edge_struct[0], edge_struct[1], attr=edge_struct[2])
+                    # self.GraphNetwork.add_edge(edge_struct[0], edge_struct[1], attr=edge_struct[2])
                     edge_list.append((edge_struct[0], edge_struct[1], edge_struct[2]['weight']))
         print("FINISHED")
-        self.Network.add_weighted_edges_from(edge_list)
+        self.GraphNetwork.add_weighted_edges_from(edge_list)
 
 
     # def visualise_network_graph(self):
     #     # Need to create a layout when doing
     #     # separate calls to draw nodes and edges
-    #     pos = nx.spring_layout(self.Network)
-    #     edge_list = list(self.Network.edges())
-    #     nx.draw_networkx_nodes(self.Network, pos, cmap=plt.get_cmap('jet'), node_size=500)
-    #     nx.draw_networkx_edges(self.Network, pos, edgelist=edge_list, edge_color='r', arrows=True)
+    #     pos = nx.spring_layout(self.GraphNetwork)
+    #     edge_list = list(self.GraphNetwork.edges())
+    #     nx.draw_networkx_nodes(self.GraphNetwork, pos, cmap=plt.get_cmap('jet'), node_size=500)
+    #     nx.draw_networkx_edges(self.GraphNetwork, pos, edgelist=edge_list, edge_color='r', arrows=True)
     #     plt.show()
+
