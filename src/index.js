@@ -3,14 +3,15 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import GraphNetwork from './pages/GraphNetwork';
+import UnAuthorised from './pages/_401';
+import Home from './pages/Home';
 import reportWebVitals from './reportWebVitals';
 import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Link,
-  useNavigate
 } from "react-router-dom";
+import ProtectedRoute from './comps/ProtectedRoute'
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -18,7 +19,9 @@ root.render(
     <Router>
       <Routes>
         <Route path="/" element={<App/>} />
-        <Route path="/GraphNetwork" element={<GraphNetwork />}/>
+        <Route path="/GraphNetwork" element={<GraphNetwork/>}/>
+        <Route path="/home" element={<Home />} />
+        <Route path={"/404"} element={<UnAuthorised />} />
       </Routes>
     </Router>
   </React.StrictMode>

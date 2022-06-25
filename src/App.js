@@ -44,8 +44,6 @@ function App() {
   function updateGraph(data){
     
     var graphData = JSON.parse(data)
-    console.log('breakpoint', graphData.nodes.length)
-    console.log('breakpoint', graphData.edges.length)
     var nodes_list = []
     var edge_list = []
     for (let i = 0; i < graphData.nodes.length; i++){
@@ -70,7 +68,8 @@ function App() {
         // updateGraph(data);
         // setHideWaves(true);
         // setHideGraphNetwork(false);
-        navigate("/GraphNetwork", {state:JSON.parse(data)});
+        // navigate("/GraphNetwork", {state:JSON.parse(data)});
+        navigate("/home", {state:JSON.parse(data)});
       }
     })
   }
