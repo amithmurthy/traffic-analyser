@@ -149,8 +149,7 @@ def validate_network_obj():
     #         print('NOT EQUAL, FAILED') 
     
 
-def pipe_graph_data(network):
-    print(network.nodes)
+def get_graph_data(network):
     graph_data = {
         'nodes': [ {'id': mac_addr, 'label':mac_addr, 'title': mac_addr} for mac_addr in network.nodes],
         'edges':[]
@@ -164,17 +163,28 @@ def pipe_graph_data(network):
         else:
             continue
     # std out returns data to PythonShell process in main (main.js Electron) process
-    print(json.dumps(graph_data))
+    return graph_data
+    
 
 def set_networkx_edges(network_inst):
-    print(len(list(network_inst.flow_table.keys())))
     for flow_id in network_inst.flow_table:
         flow_obj = network_inst.flow_table[flow_id]
         # edge = (flow_obj.src_node, flow_obj.dst_node)
-        network_inst.GraphNetwork.add_edge(flow_obj.src_node,flow_obj.dst_node)
-        # print(edge)
+        network_inst.GraphNetwork.add_edge(flow_obj.src_node,flow_obj.dst_node, weight=flow_obj.size)
+        print('size',flow_obj.size,'duration', flow_obj.duration,'no. of pkts', len(flow_obj.traffic))
 
+def get_node_table(network):
+    node_table = []
+    for node in network.GraphNetwork.nodes:
+        node_data = {'mac_addr':node.mac_addr, 'uplink_total': node.uplink_total, 'downlink_total':node.downlink_total}
+        node_table.append(node_data)
+    return node_table
 
+def pipe_home_page_data(network):
+    network._set_node_directional_data()
+    response_obj = {'network_graph': get_graph_data(network), 'node_table':get_node_table(network)}
+    print(json.dumps(response_obj))
+    
 def parse_sequentially(file_path):
     network = Network(file_path)
     pkts_read = 0
@@ -184,7 +194,7 @@ def parse_sequentially(file_path):
         else:
             reader = pcap.Reader(f)
         pkts = reader.readpkts() # Loads list of tuples (pkt info) into memory
-        # pkts = pkts[:1000]
+        pkts = pkts[:1000]
         pkt_volume = len(pkts)
         # print('pkts len',len(pkts))
         first_pkt_datetime = datetime.datetime.fromtimestamp(pkts[0][0])
@@ -223,21 +233,17 @@ def parse_sequentially(file_path):
             else:
                 # support only tcp and udp for mvp -> so save ip traffic 
                 protocol = 'IP'
-                pkt_struct['ip_len'] = ip_pkt.len if isinstance(ip_pkt, IP) else ip_pkt.plen
+                pkt_struct['payload_size'] = ip_pkt.len if isinstance(ip_pkt, IP) else ip_pkt.plen
                 flow_tuple = (pkt_struct['ip_src'], pkt_struct['ip_dst'], protocol) 
             # Send flow tuple and pkt struct to flow and node factory to sort the pkt into flow object and Node obj
             network.flow_and_node_factory(flow_tuple, pkt_struct)
             pkts_read += 1 
         end = time.time()
-    print('time', end - start)             
     
-    # pickle_obj(name='network2', obj=network, isNetworkProxy=False)
+    pickle_obj(name='network2', obj=network, isNetworkProxy=False) 
+    # print('time', end - start)  
     # set_networkx_edges(network)
-    # print(network.GraphNetwork)
-    pipe_graph_data(network)
-    # print('network instance size', sys.getsizeof(network))
-    
-
+    pipe_home_page_data(network)
 
 def get_relative_timestamp(first_pkt_timestamp, curr_pkt_timestamp):
     return (curr_pkt_timestamp - first_pkt_timestamp).total_seconds()

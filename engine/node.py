@@ -11,6 +11,8 @@ class Node:
         self.input_flows = []
         self.output_flows = []
         self.all_flows = []
+        self.uplink_total = 0
+        self.downlink_total = 0
     
     def set_input_flow(self, flow):
         """Appends flow object reference to input flows list"""

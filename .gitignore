@@ -21,3 +21,12 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+engine/__pycache__/utils.cpython-39.pyc
+engine/__pycache__/test_parser.cpython-39.pyc
+engine/__pycache__/tools.cpython-39.pyc
+engine/pcapng_file.pcapng
+engine/__pycache__/flow.cpython-39.pyc
+engine/__pycache__/network_monitor.cpython-39.pyc
+engine/__pycache__/network.cpython-39.pyc
+engine/__pycache__/node.cpython-39.pyc
+engine/__pycache__/parsing_class.cpython-39.pyc

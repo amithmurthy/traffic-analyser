@@ -7,14 +7,17 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
+import {useNavigate } from 'react-router-dom';
 
 
-
-export default function StickyHeadTable({rowData}) {
+export default function ScrollTable({columns,rowData}) {
     // rowData = [{},{}..]
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
-  
+    
+    let navigate = useNavigate()
+
+
     const handleChangePage = (event, newPage) => {
       setPage(newPage);
     };
@@ -23,6 +26,10 @@ export default function StickyHeadTable({rowData}) {
       setRowsPerPage(+event.target.value);
       setPage(0);
     };
+
+    function routeToNodeView(row) {
+      console.log('row click', row);
+    }
   
     return (
       <Paper sx={{ width: '100%', overflow: 'hidden' }}>
@@ -46,7 +53,7 @@ export default function StickyHeadTable({rowData}) {
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row) => {
                   return (
-                    <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
+                    <TableRow hover role="checkbox" tabIndex={-1} key={row.code} onClick={routeToNodeView(row)}>
                       {columns.map((column) => {
                         const value = row[column.id];
                         return (
@@ -66,7 +73,7 @@ export default function StickyHeadTable({rowData}) {
         <TablePagination
           rowsPerPageOptions={[10, 25, 100]}
           component="div"
-          count={rows.length}
+          count={rowData.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}

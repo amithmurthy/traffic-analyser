@@ -7,6 +7,8 @@ class Flow:
         self.tuple = flow_tuple  # Serves as an identifier
         self.key = self.get_key()
         self.traffic = []
+        self.size = 0
+        self.duration = 0
         self.edge_struct = None  # (n1, n2, object=edge_data)
         self.src_node = None
         self.dst_node = None
@@ -83,3 +85,5 @@ class Flow:
 
     def set_traffic(self, pkt):
         self.traffic.append(pkt)
+        self.size += pkt['payload_size']
+        self.duration = pkt['relative_timestamp'] - self.traffic[0]['relative_timestamp']

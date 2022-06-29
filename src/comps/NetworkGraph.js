@@ -1,12 +1,11 @@
 import Graph  from 'react-vis-network-graph';
-import { useLocation } from 'react-router-dom';
-import  NavBar  from './../comps/NavBar'
 
 
-const GraphNetwork = () => {
-    const location = useLocation();
-    const data = location.state;
 
+const NetworkGraph = ({data}) => {
+    // const location = useLocation();
+    // const data = location.state;
+    
     const options = {
         layout: {
           hierarchical: false
@@ -29,7 +28,7 @@ const GraphNetwork = () => {
         //       border: '#3030a9',
         //   }  
         // },
-        height: "100%",
+        height: "650",
         width:"100%",
         autoResize: true
       }
@@ -37,33 +36,26 @@ const GraphNetwork = () => {
     const events = {
     select: function(event) {
         var {nodes, edges} = event;
-        var request = {'node': nodes}
-        window.electron.facadeAPI.sendRequest(request);
-        window.electron.handle('facade', (event,data) => function(event,data) {
-            console.log(event);
-            console.log('node click event test');
-        })
+        // var request = {'node': nodes}
+        // window.electron.facadeAPI.sendRequest(request);
+        // window.electron.handle('facade', (event,data) => function(event,data) {
+        //     console.log(event);
+        //     console.log('node click event test');
+        // })
     }
     };
 
-
-
     return (
-        <>
-     
-
-      <div style={{ height: '100vh' }}>
-
+        <>          
           <Graph
             graph={data}
             options={options}
-            events={events} />
-        </div>
-       
+            events={events} 
+          />
         </>
     )
 
 
 }
 
-export default GraphNetwork;
+export default NetworkGraph;
