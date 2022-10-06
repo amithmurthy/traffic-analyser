@@ -1,29 +1,24 @@
-import React, { useState } from 'react';
-import { Nav } from 'react-bootstrap';
+import { slide as Menu } from "react-burger-menu";
 
-
-
-const NavBar = () => {
-
-  const [navbarOpen, setNavbarOpen] = useState(false);
-
-
-  const handleToggle = () => {
-    setNavbarOpen(prev => !prev)
-  }
-
+export default props => {
   return (
-    <nav className='navBar'>
-      <button onClick={handleToggle}>
-        {navbarOpen ? "Close" : "Open"}
-      </button>
-      <ul className={`menuNav ${navbarOpen ? " showMenu" : ""}`}>
-      </ul>
-    </nav>
-  
-  )
+    // Pass on our props
+    <Menu {...props}>
+      <a className="menu-item" href="/">
+        Home
+      </a>
 
+      <a className="menu-item" href="/about">
+        About
+      </a>
 
-}
+      <a className="menu-item" href="/services">
+        Services
+      </a>
 
-export default NavBar
+      <a className="menu-item" href="/contact">
+        Contact us
+      </a>
+    </Menu>
+  );
+};

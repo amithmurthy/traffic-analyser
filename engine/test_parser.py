@@ -34,25 +34,24 @@ read_pkts = Value('i', 0)
 #         return result
 
 
-# def Proxy(target):
-#     """AutoProxy function that exposes a custom Proxy class """
+def Proxy(target):
+    """AutoProxy function that exposes a custom Proxy class """
 
-#     dic = {'types': types}
-#     exec('''def __getattr__(self, key):
-#         result = self._callmethod('__getattribute__', (key,))
-#         if isinstance(result, types.MethodType):
-#             def wrapper(*args, **kwargs):
-#                 self._callmethod(key, args, kwargs)
-#             return wrapper
-#         return result''', dic)
-#     proxyName = target.__name__ + "Proxy"
-#     ProxyType = type(proxyName, (NamespaceProxy,), dic)
-#     ProxyType._exposed_ = tuple(dir(target))
-#     return ProxyType
+    dic = {'types': types}
+    exec('''def __getattr__(self, key):
+        result = self._callmethod('__getattribute__', (key,))
+        if isinstance(result, types.MethodType):
+            def wrapper(*args, **kwargs):
+                self._callmethod(key, args, kwargs)
+            return wrapper
+        return result''', dic)
+    proxyName = target.__name__ + "Proxy"
+    ProxyType = type(proxyName, (NamespaceProxy,), dic)
+    ProxyType._exposed_ = tuple(dir(target))
+    return ProxyType
 
 
 def read_pkt_hdrs(network_inst, pkts):
-    
     first_pkt_datetime = network_inst.get_first_pkt_datetime()
     for t, pkt in pkts:
         ether_pkt = Ethernet(pkt)
@@ -97,7 +96,7 @@ def read_pkt_hdrs(network_inst, pkts):
 def get_chunks(pkts, pkt_volume, n):
     return [pkts[i:i+n] for i in range(0, pkt_volume, n)]
 
-def run_parsing(file_path, network_inst):
+def parse_in_parallel(file_path, network_inst):
     
     with open(file_path, 'rb') as f:
         if '.pcapng' in file_path:
@@ -105,19 +104,16 @@ def run_parsing(file_path, network_inst):
         else:
             reader = pcap.Reader(f)
         pkts = reader.readpkts() # Loads list of tuples (pkt info) into memory
-        # pkts = pkts[:10]
+        pkts = pkts[:1000]
         pkt_volume = len(pkts)
-        print(pkt_volume)
         n = math.floor(pkt_volume / 4)
         first_pkt_datetime = datetime.datetime.fromtimestamp(pkts[0][0])
         network_inst.set_first_pkt_datetime(first_pkt_datetime)
         split_pkt_list = get_chunks(pkts, pkt_volume, n)
         input = zip(itertools.repeat(network_inst), split_pkt_list)
         pool = Pool()
-        start = time.time()
         pool.starmap(read_pkt_hdrs, input) 
-        end = time.time()
-        print('time', end - start)
+    
     sys.stdout.flush()
 
 
@@ -194,13 +190,10 @@ def parse_sequentially(file_path):
         else:
             reader = pcap.Reader(f)
         pkts = reader.readpkts() # Loads list of tuples (pkt info) into memory
-        pkts = pkts[:1000]
+        # pkts = pkts[:20000]
         pkt_volume = len(pkts)
-        # print('pkts len',len(pkts))
         first_pkt_datetime = datetime.datetime.fromtimestamp(pkts[0][0])
-        start = time.time()
         for t, pkt in pkts:
-            # print(pkts_read / pkt_volume * 100)
             ether_pkt = Ethernet(pkt)
             pkt_struct = {}
             relative_timestamp = get_relative_timestamp(first_pkt_datetime, datetime.datetime.fromtimestamp(t))
@@ -214,6 +207,8 @@ def parse_sequentially(file_path):
             pkt_struct['ip_src'] = inet_to_str(ip_pkt.src)
             pkt_struct['ip_dst'] = inet_to_str(ip_pkt.dst)
             protocol = None
+            pkts_read += 1 
+            # print('packet no.', pkts_read, 'relative timestamp:', pkt_struct['relative_timestamp'])
             if isinstance(ip_pkt.data, TCP) or isinstance(ip_pkt.data, UDP):
                 transport_pkt = None
                 if isinstance(ip_pkt, TCP):
@@ -231,19 +226,23 @@ def parse_sequentially(file_path):
                 pkt_struct['transport_protocol'] = protocol
                 flow_tuple = (pkt_struct['ip_src'], pkt_struct['ip_dst'], pkt_struct['sport'], pkt_struct['dport'], protocol)
             else:
-                # support only tcp and udp for mvp -> so save ip traffic 
+                # use len of ip packet instead (likely ICMP)
                 protocol = 'IP'
                 pkt_struct['payload_size'] = ip_pkt.len if isinstance(ip_pkt, IP) else ip_pkt.plen
                 flow_tuple = (pkt_struct['ip_src'], pkt_struct['ip_dst'], protocol) 
-            # Send flow tuple and pkt struct to flow and node factory to sort the pkt into flow object and Node obj
+            # Send flow tuple and pkt struct to flow and node factory to sort the pkt into Flow object and Node obj
             network.flow_and_node_factory(flow_tuple, pkt_struct)
-            pkts_read += 1 
+            
         end = time.time()
     
-    pickle_obj(name='network2', obj=network, isNetworkProxy=False) 
+    # print('Number of flows in the network', len(list(network.flow_table.values())))
+    # print('Flow objects in the flow table for reference:')
+    # for flow in list(network.flow_table.values())[:20]:
+    #     print(flow, ' --- number of packets in flow:', len(flow.traffic))
+    pickle_obj(name='pycon_demo_pickled_network_obj', obj=network, isNetworkProxy=False) 
     # print('time', end - start)  
     # set_networkx_edges(network)
-    pipe_home_page_data(network)
+    # pipe_home_page_data(network)
 
 def get_relative_timestamp(first_pkt_timestamp, curr_pkt_timestamp):
     return (curr_pkt_timestamp - first_pkt_timestamp).total_seconds()
@@ -252,17 +251,17 @@ def validate_pickled_obj():
     network_obj = unpickle_obj('network.pickle')
     print(network_obj.flow_table)
 
-    
+
 
 if __name__ == "__main__":
     file_path = sys.argv[1]
     # validate_pickled_obj()
     # NetworkProxy = Proxy(Network)
-    # BaseManager.register('Network', Network) # if want to share class attributes:  BaseManager.register('Network', Network, NetworkProxy) 
+    # BaseManager.register('Network', Network) 
     # manager = BaseManager()
     # manager.start()
     # network_inst = manager.Network(file_path)
-    # run_parsing(file_path, network_inst)
+    # parse_in_parallel(file_path, network_inst)
     # pickle_obj(name='network', obj=network_inst, isNetworkProxy=True)
     parse_sequentially(file_path)
     # validate_network_obj()

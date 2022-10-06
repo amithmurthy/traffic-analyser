@@ -5,6 +5,7 @@ import App from './App';
 import GraphNetwork from './pages/GraphNetwork';
 import UnAuthorised from './pages/_401';
 import Home from './pages/Home';
+import NodeView from './pages/NodeView';
 import reportWebVitals from './reportWebVitals';
 import {
   BrowserRouter as Router,
@@ -21,6 +22,7 @@ root.render(
         <Route path="/" element={<App/>} />
         <Route path="/GraphNetwork" element={<GraphNetwork/>}/>
         <Route path="/home" element={<Home />} />
+        <Route path='/:nodeId' element={<NodeView />} />
         <Route path={"/404"} element={<UnAuthorised />} />
       </Routes>
     </Router>

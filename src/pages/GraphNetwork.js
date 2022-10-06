@@ -1,6 +1,6 @@
 import Graph  from 'react-vis-network-graph';
 import { useLocation } from 'react-router-dom';
-import  NavBar  from './../comps/NavBar'
+
 
 
 const GraphNetwork = () => {
@@ -50,16 +50,13 @@ const GraphNetwork = () => {
 
     return (
         <>
-     
-
-      <div style={{ height: '100vh' }}>
-
-          <Graph
-            graph={data}
-            options={options}
-            events={events} />
-        </div>
-       
+          <div style={{ height: '100vh' }}>
+            <Graph
+              graph={data}
+              options={options}
+              events={events} 
+            />
+          </div>
         </>
     )
 

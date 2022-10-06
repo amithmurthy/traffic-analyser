@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import NetworkGraph from '../comps/NetworkGraph';
+import  NavBar  from './../comps/NavBar'
 import { Card, CardContent } from '@mui/material';
 import ScrollTable from '../comps/ScrollTable';
 import Hamburger from 'hamburger-react'
@@ -21,12 +22,7 @@ const Home = () => {
     return (
     
     <>  
-        {/* <Hamburger toggled={isOpen} toggle={setOpen} /> */}
-        <>
-        <Menu>
-        <a id="home" className="menu-item" href="/">Home</a>
-        </Menu>
-        </>
+        
         <div style={{ height: '100vh' }}>
             <div style={{alignItems: 'center'}}>
                 <h1 > Home </h1>

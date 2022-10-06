@@ -1,8 +1,7 @@
 from flow import Flow
 
-
 class Node:
-    """Node to a NetworkGraph"""
+    """Node in a Network"""
     def __init__(self, mac_addr):
         self.mac_addr = mac_addr
         self.name = None

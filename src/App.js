@@ -1,7 +1,7 @@
 import logo from './logo.svg';
 import './App.css';
 import React, { useState, useEffect } from 'react';
-import { useHistory, useNavigate } from 'react-router-dom';
+import {  useNavigate } from 'react-router-dom';
 // import ProgressBar from './comps/ProgressBar';
 // import ProgressBar from 'react-bootstrap/ProgressBar'
 import { Waves } from 'loading-animations-react'
@@ -96,9 +96,7 @@ function App() {
               </div>
             } 
           </div>
-          
       </header>
-      
     </div>
   );
 }

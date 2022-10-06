@@ -1,13 +1,10 @@
 import networkx as nx
 from flow import Flow
-# import matplotlib.pyplot as plt
 from node import Node
-import time
 
 class Network:
-    """ Class handles graph based feature analysis and derives from networkx Graph class behaviors/property (i.e., composite of the nx.Graph() class)"""
     def __init__(self, network_trace_file):
-        self.GraphNetwork = nx.MultiDiGraph()
+        self.GraphNetwork = nx.MultiDiGraph() # composite of the nx.Graph() class to access graph network properties 
         self.network_trace_file = network_trace_file
         self.flow_table = {}  # Flow.id aka Flow 5-tuple: Flow() object  
         self.mac_to_ip = {}
@@ -145,29 +142,15 @@ class Network:
         print("FINISHED")
         self.GraphNetwork.add_weighted_edges_from(edge_list)
 
-    def test_flow_iteration(self):
-        start = time.time()
+ 
+    def _set_node_directional_data(self):
+        
         for flow in self.flow_table.values():
             #src is oplink, dst is downlink
             flow.src_node.uplink_total += flow.size
             flow.dst_node.downlink_total += flow.size
-        end = time.time()
-        print('flow iteration speed:', end - start)
-
-    def test_node_iteration(self):
-        start = time.time()
-        for node in self.nodes.values():
-            for flow in node.input_flows:
-                node.downlink_total += flow.size
-            for flow in node.output_flows:
-                node.uplink_total += flow.size
-        end = time.time()
-        print('node iteration speed:', end - start)
-
-    def _set_node_directional_data(self):
-        # TODO: Improve speed by using a thread for each node and iter
-        # self.test_flow_iteration()
-        self.test_node_iteration()
+        
+        
 
 
     # def visualise_network_graph(self):

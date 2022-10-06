@@ -5,15 +5,16 @@ class Flow:
     """this is an edge to a Node object. A Flow belongs to 2 Nodes"""
     def __init__(self, flow_tuple):
         self.tuple = flow_tuple  # Serves as an identifier
-        self.key = self.get_key()
-        self.traffic = []
+        self.traffic = [] # holds all the pkt_structs in the flow
         self.size = 0
         self.duration = 0
-        self.edge_struct = None  # (n1, n2, object=edge_data)
         self.src_node = None
         self.dst_node = None
-        self.metadata = None  # {attribute: value}
-        self.edge_data = {}
+
+    def set_traffic(self, pkt):
+        self.traffic.append(pkt)
+        self.size += pkt['payload_size']
+        self.duration = pkt['relative_timestamp'] - self.traffic[0]['relative_timestamp']
 
     def get_tuple(self):
         if self.tuple is not None:
@@ -51,7 +52,6 @@ class Flow:
         except AssertionError as e:
             self.set_edge_struct()
             print("edge struct not set..being set now")
-
             # raise Exception("Edge struct not computed. Set method called and edge_struct initiated")
         return self.edge_struct
 
@@ -83,7 +83,7 @@ class Flow:
         avg_pkt_size = self.metadata['total_bytes'] / self.metadata['total_pkts']
         return avg_pkt_size
 
-    def set_traffic(self, pkt):
-        self.traffic.append(pkt)
-        self.size += pkt['payload_size']
-        self.duration = pkt['relative_timestamp'] - self.traffic[0]['relative_timestamp']
+# self.metadata = None  # {attribute: value}
+# self.edge_data = {}
+# self.key = self.get_key()
+# self.edge_struct = None  # (n1, n2, object=edge_data)
