@@ -1,10 +1,12 @@
-const { BrowserWindow, app, ipcMain, dialog} = require('electron');
+const { BrowserWindow, app, ipcMain, dialog, session} = require('electron');
 const { PythonShell } = require("python-shell");
+// const {localStorage, sessionStorage} = require('electron-browser-storage');
 
 // const Facade = require('../engine_facade/engine_facade')
 // require('@electron/remote/main').initialize()
 const path = require('path');
 const { request } = require('http');
+const { assert } = require('console');
 
 let win = null;
 
@@ -12,7 +14,7 @@ var pythonOptions = {
     mode: 'text',
     encoding: 'utf8',
     scriptPath: path.join(__dirname, '/../engine/'),
-    pythonPath: 'C:/Python39/python.exe',
+    pythonPath: '/Users/amith/Documents/Study/traffic-analyser/engine/venv/bin/python3',
     args: []
 };
 
@@ -31,9 +33,12 @@ function createWindow() {
         }
     })
     win.loadURL('http://localhost:3000')
+    win.webContents.openDevTools()
 }
 
 app.on('ready', createWindow)
+
+
 
 // Quit when all windows are closed 
 
@@ -81,28 +86,84 @@ ipcMain.on('fileExplorer', (_event, args) => {
     });
 })
 
+
+const setSessionStorageItem = (key, value) => {
+    // sets session storage item
+    console.log('setting session storage with key:', key)
+    win.webContents.executeJavaScript(`window.sessionStorage.setItem('${key}', '${value}');`)
+}   
+
+const getSessionStoargeItem = (key) => {
+    // returns a Promise object
+    console.log('getting session storage item with key', key)
+    return win.webContents.executeJavaScript(`window.sessionStorage.getItem('${key}');`, true)
+}
+
+
+ipcMain.on('storeHomePageData', (_event, inData) => {
+    // win.webContents.executeJavaScript(`window.sessionStorage.setItem('${'homePageData'}', '${JSON.stringify(inData)}');`)
+    // win.webContents.executeJavaScript(`window.sessionStorage.getItem('${'homePageData'}');`, true)
+    // .then(result => {
+    //     console.log(JSON.parse(result))
+    // })
+    setSessionStorageItem('homePageData', inData);
+})
+
+ipcMain.on('setSessionStorageItem', (_event, key, value) => {
+    // main interface for session storage functions
+    setSessionStorageItem(key, JSON.stringify(value))
+})
+
+ipcMain.on('getSessionStorageItem', (_event, key) => {
+    getSessionStoargeItem(key)
+    .then(value => {
+        _event.sender.send('getSessionStorageItem', value)
+    })
+})
+
+
+ipcMain.on('getHomePageData', (_event) => {
+    getSessionStoargeItem('homePageData')
+    .then(value => {
+        console.log('sending session storage value to renderer')
+        _event.sender.send('getHomePageData', value);
+    })    
+})
+
+
 ipcMain.on('parser', (_event, filePath) => {
     
     pythonOptions.args.push(filePath)
-    console.log('ipc main working')
+    console.log('sending parse request to engine')
     let parser = new PythonShell('test_parser.py', pythonOptions);
     parser.on('message', function(message){
+        // Create in-memory user session to store data in memory to avoid redundant computation/operations on data 
         // event.sender is the IpcMainEvent object sender (webContent object that send sent the 'parser' message)
-        _event.sender.send('parsePercentage', message);
+        _event.sender.send('serialisedSessionData', message);
     })
     
 })
 
 
-ipcMain.on('facade', (_event, request) =>{
+ipcMain.on('facade', (_event, request, key) =>{
     
     pythonOptions.args.pop();
-    pythonOptions.args.push(JSON.stringify(request));
-    let facade = new PythonShell('facade.py', pythonOptions);
-    // facade.send(request);
-    facade.on('message', function(message){
-        console.log(message);
-        _event.sender.send('facade', message);
+    getSessionStoargeItem('serialisedSessionData')
+    .then(value => {
+        console.log('value', typeof(value))
+        console.log('json stringed value', JSON.parse (value))
+        request[key] = value
+        pythonOptions.args.push(JSON.stringify(request));
+        let facade = new PythonShell('facade.py', pythonOptions);
+        console.log(request)
+        // facade.send(request);
+        facade.on('message', function(message){
+            console.log(message);
+            // _event.sender.send('facade', message);  
+        })
     })
     
 })
+
+
+

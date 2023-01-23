@@ -9,6 +9,7 @@ import socket
 from dpkt.compat import compat_ord
 import pickle
 from copy import deepcopy
+import jsonpickle
 
 def mac_addr(address):
     """Convert a MAC address to a readable/printable string
@@ -19,7 +20,6 @@ def mac_addr(address):
            str: Printable/readable MAC address
     """
     return ':'.join('%02x' % compat_ord(b) for b in address)
-
 
 
 def inet_to_str(inet):
@@ -36,23 +36,34 @@ def inet_to_str(inet):
     except ValueError:
         return socket.inet_ntop(socket.AF_INET6, inet)
 
+
 def pickle_obj(name, obj, isNetworkProxy):
     if isNetworkProxy:
         n = deepcopy(obj)
-        print('object type',type(n))
+        print('object type', type(n))
         with open(name + '.pickle', 'wb') as f:
-            pickle.dump(n,f)
+            pickle.dump(n, f)
     else:
         with open(name + '.pickle', 'wb') as f:
-            pickle.dump(obj,f)
-    
+            pickle.dump(obj, f)
+
 def unpickle_obj(input_pickle):
-    print('unpickling')
+    print('unpickling', input_pickle)
     with open(input_pickle, 'rb') as f:
         return pickle.load(f)
 
+def jsonpickle_obj(obj):
+    """
+    Does not support the NetworkProxy class so cannot serialise Network Class instance that was parsed in parallel (multiprocessing)
+    """
+
+    # print('jsonpickling object', obj)
+    frozen = jsonpickle.encode(obj)
+    return frozen
+
+
 # def timeit(f):
-    
+
 #     def timed(*args, **kw):
 
 #         ts = time.time()

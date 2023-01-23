@@ -1,26 +1,50 @@
-"""Unpickles persist data and serves user requests from front end """
-from email import utils
-from msilib.schema import Error
+"""Fetches persistent data and serves user requests from front end """
 import sys
+import jsonpickle
 from flask import request
 from utils import unpickle_obj
 import json
-
-def _retrieve_data():
-    return unpickle_obj("network2.pickle")
-
+from test_parser import pipe_home_page_data
 
 def node_endpoint(request_node):
-    network_inst = _retrieve_data()
+    network_inst = unpickle_obj("network2.pickle")
     # if network_inst._is_node(request_node):
-        # if node is present 
-    
-    
+    # if node is present
 
+
+def run_graph_structure_analysis(file_name):
+    data_dir = "/Users/amith/Documents/Study/serialised-data/benign" + '/' + file_name
+    draw_network_graph(saved_network_path=data_dir)
+
+
+def draw_network_graph(saved_network_path: str) -> None:
+    """
+    Draws the graph network to visualise network structure
+    """
+    # Fetch saved network instance
+    network_instance = unpickle_obj(saved_network_path)
+    network_instance.visualise_network_graph()
+    # network_instance.visualise_network_graph_3d()
+
+def decode_jsonpickle(serialised_data):
+    data = jsonpickle.decode(serialised_data['pipe_home_page_data'])
+    print(type(serialised_data['pipe_home_page_data']))
+    # data = json.loads(serialised_data['pipe_home_page_data'])
+    print('decoded data', data)
+    return data
 
 if __name__ == "__main__":
+    # run_graph_structure_analysis(str(sys.argv[1]))
+    # draw_network_graph(str(sys.argv[1]))
+    print('incoming request format',sys.argv[1])
     request = dict(json.loads(sys.argv[1]))
-    func_dispatcher = {'node': node_endpoint}
+    # request = decode_jsonpickle(sys.argv[1])
+    print('python request decoded',request)
+    f_request = decode_jsonpickle(request)
+    
+    func_dispatcher = {'node': node_endpoint, 'draw_network_graph': draw_network_graph, 'pipe_home_page_data': pipe_home_page_data}
+    # # Finds func requested
     func = next(iter(request))
-    func_dispatcher[func](request[func])
-
+    network_instance = decode_jsonpickle(request[func])
+    # # Dispatches to func with required argument
+    # func_dispatcher[func](request[func])

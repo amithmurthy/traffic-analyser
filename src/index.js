@@ -22,7 +22,7 @@ root.render(
         <Route path="/" element={<App/>} />
         <Route path="/GraphNetwork" element={<GraphNetwork/>}/>
         <Route path="/home" element={<Home />} />
-        <Route path='/:nodeId' element={<NodeView />} />
+        <Route path='/nodes/:nodeId' element={<NodeView />} />
         <Route path={"/404"} element={<UnAuthorised />} />
       </Routes>
     </Router>

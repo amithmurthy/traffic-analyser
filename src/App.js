@@ -35,10 +35,20 @@ function App() {
     setGraph(map => map.set(key, value));
   }
  
-  function isGraphData(backendData){
-
-    console.log(typeof(backendData))
+  function isValidHomePageData(backendData){
     return true;
+  }
+
+  const isSerialisedData = (data) => {
+    const dataToSave = JSON.parse(data)
+    console.log(JSON.parse(dataToSave.serialised))
+    window.electron.sessionStorageAPI.setSessionStorageItem('serialisedSessionData', JSON.parse(dataToSave.serialised));
+    return true
+    // if('serialised' in JSON.parse(data)){
+    //   window.electron.sessionStorageAPI.setSessionStorageItem('serialisedSessionData', data);
+    //   return true
+    // }
+    // return false
   }
 
   function updateGraph(data){
@@ -54,38 +64,41 @@ function App() {
       edge_list.push(graphData.edges[j])
     }
     updateMap('edges', edge_list)
-    console.log(graph)
-    console.log(graph['nodes'])
-    console.log(graph['edges'])
-   }
+  }
 
   function openFileExplorer(){
     window.electron.filesAPI.getFileExplorer()
     setHideProgressBar(false);
     setHideWaves(false);
-    window.electron.handle('parsePercentage', (event,data) => function(event,data) {
-      if (isGraphData(data)){
-        // updateGraph(data);
-        // setHideWaves(true);
-        // setHideGraphNetwork(false);
-        // navigate("/GraphNetwork", {state:JSON.parse(data)});
-        navigate("/home", {state:JSON.parse(data)});
+    window.electron.handle('serialisedSessionData', (event, data) => function(event, data) {
+      if (isSerialisedData(data)){
+        const home_page_data_request = {'pipe_home_page_data': null}
+        window.electron.facadeAPI.sendRequest(home_page_data_request, 'pipe_home_page_data')
       }
     })
+
+    window.electron.handle('facade', (event, data) => function(event, data){
+      if (isValidHomePageData(data)){
+        navigate("/home", {state: JSON.parse(data)})
+      }
+    })
+    // window.electron.handle('parsePercentage', (event,data) => function(event,data) {
+    //   if (isSerialisedData(data)){
+    //     // window.electron.sessionStorageAPI.setHomePageData(JSON.stringify(JSON.parse(data)));
+    //     navigate("/home", {state:JSON.parse(data)});
+    //   }
+    // })
   }
 
   return (
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
-        
+
           <div>
-            {hideProgressBar?
+            {hideProgressBar ?
             <button id='fileSelector' onClick={() => openFileExplorer()}>Select File </button>
-              :
-            // <ProgressBar bgcolor={ProgressBarData.bgcolor} completedPercentage={parseProgress} />
-              // <ProgressBar completed={parseProgress} />
-              
+              :  
               <div>
                 {
                   hideWaves?

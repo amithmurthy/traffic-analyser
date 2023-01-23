@@ -15,9 +15,8 @@ export default function ScrollTable({columns,rowData}) {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     
-    let navigate = useNavigate()
-
-
+    const navigate = useNavigate()
+    // console.log(rowData)
     const handleChangePage = (event, newPage) => {
       setPage(newPage);
     };
@@ -27,8 +26,9 @@ export default function ScrollTable({columns,rowData}) {
       setPage(0);
     };
 
-    function routeToNodeView(row) {
-      console.log('row click', row);
+    function routeToNodeView(rowKey) {
+      const selectedNode = rowData[rowKey]['mac_addr']
+      navigate('/nodes/' + selectedNode)
     }
   
     return (
@@ -51,9 +51,9 @@ export default function ScrollTable({columns,rowData}) {
             <TableBody>
               {rowData
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((row) => {
+                .map((row, index) => {
                   return (
-                    <TableRow hover role="checkbox" tabIndex={-1} key={row.code} onClick={routeToNodeView(row)}>
+                    <TableRow hover role="checkbox" tabIndex={-1} key={index} onClick={() => routeToNodeView(index)}>
                       {columns.map((column) => {
                         const value = row[column.id];
                         return (

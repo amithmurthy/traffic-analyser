@@ -1,11 +1,13 @@
 from copy import deepcopy
 import hashlib
 
+
 class Flow:
     """this is an edge to a Node object. A Flow belongs to 2 Nodes"""
+
     def __init__(self, flow_tuple):
         self.tuple = flow_tuple  # Serves as an identifier
-        self.traffic = [] # holds all the pkt_structs in the flow
+        self.traffic = []  # holds all the pkt_structs in the flow
         self.size = 0
         self.duration = 0
         self.src_node = None
@@ -28,7 +30,8 @@ class Flow:
         return hash_key
 
     # def _set_flow_direction_at_nodes(self):
-    #     """As a flow can belong to 2 nodes, this function returns the direction of the flow by the node calling this function"""
+    #     """As a flow can belong to 2 nodes, this function returns the direction of
+    #     the flow by the node calling this function"""
     #     self.direction_at_nodes[self.src_node] = 'output'
     #     self.direction_at_nodes[self.dst_node] = 'input'
 

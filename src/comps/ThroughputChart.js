@@ -4,7 +4,7 @@ import React from "react";
 
 const ThroughputCard = ({ data }) => {
     
-
+    
     return (
         <Card>
             <CardHeader title="Traffic by Device" />
