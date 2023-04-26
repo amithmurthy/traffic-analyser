@@ -6,6 +6,7 @@ import GraphNetwork from './pages/GraphNetwork';
 import UnAuthorised from './pages/_401';
 import Home from './pages/Home';
 import NodeView from './pages/NodeView';
+import Nodes from './pages/Nodes'
 import reportWebVitals from './reportWebVitals';
 import {
   BrowserRouter as Router,
@@ -16,17 +17,18 @@ import ProtectedRoute from './comps/ProtectedRoute'
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <React.StrictMode>
+  // <React.StrictMode>
     <Router>
       <Routes>
         <Route path="/" element={<App/>} />
         <Route path="/GraphNetwork" element={<GraphNetwork/>}/>
         <Route path="/home" element={<Home />} />
+        <Route path="/nodes" element={<Nodes />} />
         <Route path='/nodes/:nodeId' element={<NodeView />} />
         <Route path={"/404"} element={<UnAuthorised />} />
       </Routes>
     </Router>
-  </React.StrictMode>
+  // </React.StrictMode>
 );
 
 // If you want to start measuring performance in your app, pass a function

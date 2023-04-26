@@ -10,6 +10,7 @@ from dpkt.compat import compat_ord
 import pickle
 from copy import deepcopy
 import jsonpickle
+# from pahtlib import Path
 
 def mac_addr(address):
     """Convert a MAC address to a readable/printable string
@@ -38,17 +39,19 @@ def inet_to_str(inet):
 
 
 def pickle_obj(name, obj, isNetworkProxy):
+    # path = Path(r"/Users/amith/Documents/Study/traffic-analyser/engine/storage")
+    name = name + '.pickle'
+    # path = str(path / name)
     if isNetworkProxy:
         n = deepcopy(obj)
         print('object type', type(n))
-        with open(name + '.pickle', 'wb') as f:
+        with open(name, 'wb') as f:
             pickle.dump(n, f)
     else:
-        with open(name + '.pickle', 'wb') as f:
+        with open(name, 'wb') as f:
             pickle.dump(obj, f)
 
 def unpickle_obj(input_pickle):
-    print('unpickling', input_pickle)
     with open(input_pickle, 'rb') as f:
         return pickle.load(f)
 
@@ -56,7 +59,6 @@ def jsonpickle_obj(obj):
     """
     Does not support the NetworkProxy class so cannot serialise Network Class instance that was parsed in parallel (multiprocessing)
     """
-
     # print('jsonpickling object', obj)
     frozen = jsonpickle.encode(obj)
     return frozen

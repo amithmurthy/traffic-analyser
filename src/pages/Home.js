@@ -10,8 +10,7 @@ const Home = () => {
 
     const location = useLocation();
     const networkData = location.state;
-    const [sessionData, setSessionData] = useState()
-
+    
     // if (! networkData){
         // window.electron.sessionStorageAPI.getHomePageData()
         // window.electron.handle('getHomePageData', (event,data) => function(event,data) {

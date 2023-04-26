@@ -13,6 +13,9 @@ class Network:
         self.first_pkt_datetime = None
         self.nodes = {}  # {mac_addr: Node() object, mac_addr: Node() object ....}
 
+    # def __str__(self):
+    #     return f"Network({self.value})"
+
     def flow_and_node_factory(self, flow_tuple, pkt_struct):
         """
         Creational factory method to either create Node and Flow objects and correctly sort
@@ -143,7 +146,7 @@ class Network:
                 else:
                     # self.GraphNetwork.add_edge(edge_struct[0], edge_struct[1], attr=edge_struct[2])
                     edge_list.append((edge_struct[0], edge_struct[1], edge_struct[2]['weight']))
-        print("FINISHED")
+        
         self.GraphNetwork.add_weighted_edges_from(edge_list)
 
     def set_networkx_edges(self):
@@ -160,7 +163,7 @@ class Network:
             flow.src_node.uplink_total += flow.size
             flow.dst_node.downlink_total += flow.size
 
-
+    
 
     def visualise_network_graph(self):
         # Need to create a layout when doing

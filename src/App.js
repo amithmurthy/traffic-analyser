@@ -40,15 +40,9 @@ function App() {
   }
 
   const isSerialisedData = (data) => {
-    const dataToSave = JSON.parse(data)
-    console.log(JSON.parse(dataToSave.serialised))
-    window.electron.sessionStorageAPI.setSessionStorageItem('serialisedSessionData', JSON.parse(dataToSave.serialised));
+    
+    // window.electron.sessionStorageAPI.setSessionStorageItem('serialisedSessionData', data);
     return true
-    // if('serialised' in JSON.parse(data)){
-    //   window.electron.sessionStorageAPI.setSessionStorageItem('serialisedSessionData', data);
-    //   return true
-    // }
-    // return false
   }
 
   function updateGraph(data){
@@ -70,18 +64,16 @@ function App() {
     window.electron.filesAPI.getFileExplorer()
     setHideProgressBar(false);
     setHideWaves(false);
-    window.electron.handle('serialisedSessionData', (event, data) => function(event, data) {
-      if (isSerialisedData(data)){
-        const home_page_data_request = {'pipe_home_page_data': null}
-        window.electron.facadeAPI.sendRequest(home_page_data_request, 'pipe_home_page_data')
-      }
+    window.electron.handle('routeToHome', (event, data) => function(event, data) {
+      window.electron.sessionStorageAPI.setSessionStorageItem('homePageData',JSON.stringify(JSON.parse(data)));
+      navigate("/home", {state: JSON.parse(data)})
     })
 
-    window.electron.handle('facade', (event, data) => function(event, data){
-      if (isValidHomePageData(data)){
-        navigate("/home", {state: JSON.parse(data)})
-      }
-    })
+    // window.electron.handle('facade', (event, data) => function(event, data){
+    //   if (isValidHomePageData(data)){
+    //     navigate("/home", {state: JSON.parse(data)})
+    //   }
+    // })
     // window.electron.handle('parsePercentage', (event,data) => function(event,data) {
     //   if (isSerialisedData(data)){
     //     // window.electron.sessionStorageAPI.setHomePageData(JSON.stringify(JSON.parse(data)));

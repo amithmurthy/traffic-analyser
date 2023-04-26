@@ -198,7 +198,7 @@ def parse_sequentially(file_path):
         else:
             reader = pcap.Reader(f)
         pkts = reader.readpkts()  # Loads list of tuples (pkt info) into memory
-        pkts = pkts[:10000]
+        pkts = pkts[:1000]
         pkt_volume = len(pkts)
         first_pkt_datetime = datetime.datetime.fromtimestamp(pkts[0][0])
         for t, pkt in pkts:
@@ -252,10 +252,10 @@ def parse_sequentially(file_path):
     # set_networkx_edges(network)
     network.set_networkx_edges()
     # pickle_obj(name='../../serialised-data/benign/16-10-01', obj=network, isNetworkProxy=False)
-    response_obj = jsonpickle_obj(network)
-    print(json.dumps({'serialised': response_obj}))
-    # pipe_home_page_data(network)
-
+    # pickle_obj(name='session_storage', obj=network, isNetworkProxy=False)
+    # response_obj = jsonpickle_obj(network)
+    # print(response_obj)
+    pipe_home_page_data(network)
 
 def get_relative_timestamp(first_pkt_timestamp, curr_pkt_timestamp):
     return (curr_pkt_timestamp - first_pkt_timestamp).total_seconds()
@@ -264,6 +264,7 @@ def get_relative_timestamp(first_pkt_timestamp, curr_pkt_timestamp):
 def validate_pickled_obj():
     network_obj = unpickle_obj('network.pickle')
     print(network_obj.flow_table)
+
 
 
 if __name__ == "__main__":

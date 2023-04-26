@@ -6,10 +6,15 @@ from utils import unpickle_obj
 import json
 from test_parser import pipe_home_page_data
 
-def node_endpoint(request_node):
-    network_inst = unpickle_obj("network2.pickle")
+
+def getNodeView(request_node):
+    # print('entered getNodeView function!', request_node)
+    network_inst = unpickle_obj("session_storage.pickle")
     # if network_inst._is_node(request_node):
     # if node is present
+    node = network_inst.nodes[request_node]
+    response_obj = node.get_throughput()
+    print(json.dumps(response_obj))
 
 
 def run_graph_structure_analysis(file_name):
@@ -36,15 +41,14 @@ def decode_jsonpickle(serialised_data):
 if __name__ == "__main__":
     # run_graph_structure_analysis(str(sys.argv[1]))
     # draw_network_graph(str(sys.argv[1]))
-    print('incoming request format',sys.argv[1])
+    # print('incoming request format',sys.argv[1])
     request = dict(json.loads(sys.argv[1]))
     # request = decode_jsonpickle(sys.argv[1])
-    print('python request decoded',request)
-    f_request = decode_jsonpickle(request)
-    
-    func_dispatcher = {'node': node_endpoint, 'draw_network_graph': draw_network_graph, 'pipe_home_page_data': pipe_home_page_data}
+    # print('python request decoded',request)
+    # f_request = decode_jsonpickle(request)
+    func_dispatcher = {'getNodeView': getNodeView, 'draw_network_graph': draw_network_graph, 'pipe_home_page_data': pipe_home_page_data}
     # # Finds func requested
     func = next(iter(request))
-    network_instance = decode_jsonpickle(request[func])
+    # network_instance = decode_jsonpickle(request[func])
     # # Dispatches to func with required argument
-    # func_dispatcher[func](request[func])
+    func_dispatcher[func](request[func])

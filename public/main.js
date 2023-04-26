@@ -110,8 +110,9 @@ ipcMain.on('storeHomePageData', (_event, inData) => {
 })
 
 ipcMain.on('setSessionStorageItem', (_event, key, value) => {
+    console.log('setting session storage item', typeof(value))
     // main interface for session storage functions
-    setSessionStorageItem(key, JSON.stringify(value))
+    setSessionStorageItem(key, value)
 })
 
 ipcMain.on('getSessionStorageItem', (_event, key) => {
@@ -137,29 +138,25 @@ ipcMain.on('parser', (_event, filePath) => {
     console.log('sending parse request to engine')
     let parser = new PythonShell('test_parser.py', pythonOptions);
     parser.on('message', function(message){
-        // Create in-memory user session to store data in memory to avoid redundant computation/operations on data 
-        // event.sender is the IpcMainEvent object sender (webContent object that send sent the 'parser' message)
-        _event.sender.send('serialisedSessionData', message);
+        _event.sender.send('routeToHome', message);
     })
-    
 })
 
 
 ipcMain.on('facade', (_event, request, key) =>{
     
     pythonOptions.args.pop();
-    getSessionStoargeItem('serialisedSessionData')
-    .then(value => {
-        console.log('value', typeof(value))
-        console.log('json stringed value', JSON.parse (value))
-        request[key] = value
-        pythonOptions.args.push(JSON.stringify(request));
-        let facade = new PythonShell('facade.py', pythonOptions);
-        console.log(request)
-        // facade.send(request);
-        facade.on('message', function(message){
-            console.log(message);
-            // _event.sender.send('facade', message);  
+    pythonOptions.args.push(JSON.stringify(request));
+    let facade = new PythonShell('facade.py', pythonOptions);
+    // facade.send(request);
+    const renderChannel = Object.keys(request)[0]
+    facade.on('message', function(message){
+        console.log('python message received')
+        _event.sender.send('getNodeView', message);  
+        facade.end(function(err, code, output){
+            if (err){
+                console.log(err)
+            }
         })
     })
     

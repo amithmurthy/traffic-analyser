@@ -45,6 +45,7 @@ const NetworkGraph = ({data}) => {
     }
     };
 
+    console.log('graph vis data', data)
     return (
         <>          
           <Graph
