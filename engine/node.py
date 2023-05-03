@@ -29,8 +29,8 @@ class Node:
             self.ip_addrs.append(ip_addr)
     
 
-    def get_throughput(self):
-
+    def get_throughput(self, sampling_rate=60):
+        # sampling_rate = sampling_rate
 
         def compute_relative_throughput(flow, start_time, data_struct):
             for pkt in flow.traffic:
@@ -55,7 +55,7 @@ class Node:
         input_duration = int(_find_last_pkt_time(self.input_flows) - input_start_time)
         output_start_time = self.output_flows[0].traffic[0]['relative_timestamp']
         output_duration = int(_find_last_pkt_time(self.output_flows) - output_start_time)
-        sampling_rate = 30
+        
         # input_throughput = {i: {'pkt_rate': 0, 'byte_rate': 0} for i in range(0, input_duration + sampling_rate, sampling_rate)}
         # output_throughput = {i: {'pkt_rate': 0, 'byte_rate': 0} for i in range(0, output_duration + sampling_rate, sampling_rate)}
         input_pkt_rate = [0] * input_duration
@@ -86,6 +86,23 @@ class Node:
         return response_obj
 
     
+    def get_flow_scatter_plot(self):
+        res = {}
+        res['input_size'] = []
+        res['input_duration'] = []
+        res['output_size'] = []
+        res['output_duration'] = []
+        
+        for flow in self.input_flows:
+            res['input_size'].append(flow.size)
+            res['input_duration'].append(flow.duration)
+        
+        for flow in self.output_flows:
+            res['output_size'].append(flow.size)
+            res['output_duration'].append(flow.duration)
+        
+        return res
+
     
     # def get_flows(self, device_flow_table):
     #     flow_table = {}

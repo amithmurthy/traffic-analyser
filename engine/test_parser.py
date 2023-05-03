@@ -198,7 +198,6 @@ def parse_sequentially(file_path):
         else:
             reader = pcap.Reader(f)
         pkts = reader.readpkts()  # Loads list of tuples (pkt info) into memory
-        pkts = pkts[:1000]
         pkt_volume = len(pkts)
         first_pkt_datetime = datetime.datetime.fromtimestamp(pkts[0][0])
         for t, pkt in pkts:

@@ -2,11 +2,14 @@ const { BrowserWindow, app, ipcMain, dialog, session} = require('electron');
 const { PythonShell } = require("python-shell");
 // const {localStorage, sessionStorage} = require('electron-browser-storage');
 
+
 // const Facade = require('../engine_facade/engine_facade')
 // require('@electron/remote/main').initialize()
 const path = require('path');
 const { request } = require('http');
 const { assert } = require('console');
+const isDev = require('electron-is-dev');
+
 
 let win = null;
 
@@ -14,7 +17,7 @@ var pythonOptions = {
     mode: 'text',
     encoding: 'utf8',
     scriptPath: path.join(__dirname, '/../engine/'),
-    pythonPath: '/Users/amith/Documents/Study/traffic-analyser/engine/venv/bin/python3',
+    pythonPath: '/Users/amithmurthy/Documents/projects/traffic-analyser/engine/env/bin/python3',
     args: []
 };
 
@@ -33,11 +36,15 @@ function createWindow() {
         }
     })
     win.loadURL('http://localhost:3000')
+    // win.loadURL(
+    //     isDev ? 'http://localhost:3000'
+    //     : `file://${path.join(__dirname, '../build/index.html')}`
+    // )
+    // win.loadURL(`file://${path.join(__dirname, '../build/index.html')}`)
     win.webContents.openDevTools()
 }
 
 app.on('ready', createWindow)
-
 
 
 // Quit when all windows are closed 
@@ -52,7 +59,7 @@ app.on('window-all-closed', function() {
 
 app.on('activate', function(){
     // On OS X it is common to re-create a window in the app when 
-    // the dock icon is clicked and there are not other windows open 
+    // the dock icon is clicked and there are not other windows open
     if (BrowserWindow.getAllWindows().length === 0){
         createWindow()
     }
@@ -152,7 +159,7 @@ ipcMain.on('facade', (_event, request, key) =>{
     const renderChannel = Object.keys(request)[0]
     facade.on('message', function(message){
         console.log('python message received')
-        _event.sender.send('getNodeView', message);  
+        _event.sender.send(renderChannel, message);  
         facade.end(function(err, code, output){
             if (err){
                 console.log(err)

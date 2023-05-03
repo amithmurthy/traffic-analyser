@@ -13,7 +13,9 @@ def getNodeView(request_node):
     # if network_inst._is_node(request_node):
     # if node is present
     node = network_inst.nodes[request_node]
-    response_obj = node.get_throughput()
+    response_obj = {}
+    response_obj['throughput'] = node.get_throughput()
+    response_obj['scatter_plot'] = node.get_flow_scatter_plot()
     print(json.dumps(response_obj))
 
 
@@ -38,15 +40,30 @@ def decode_jsonpickle(serialised_data):
     print('decoded data', data)
     return data
 
+def configure_node_throughput_sampling_rate(params):
+    # params: a dictionary containing nodeId and sampling rate values
+    network_inst = unpickle_obj("session_storage.pickle")
+    node = network_inst.nodes[params['node']]
+    response_obj = {}
+    response_obj['throughput'] = node.get_throughput(sampling_rate=params['sampling_rate'])
+    print(json.dumps(response_obj))
+    
+
 if __name__ == "__main__":
     # run_graph_structure_analysis(str(sys.argv[1]))
     # draw_network_graph(str(sys.argv[1]))
     # print('incoming request format',sys.argv[1])
+    # getNodeView("70:ee:50:18:34:43")
     request = dict(json.loads(sys.argv[1]))
     # request = decode_jsonpickle(sys.argv[1])
     # print('python request decoded',request)
     # f_request = decode_jsonpickle(request)
-    func_dispatcher = {'getNodeView': getNodeView, 'draw_network_graph': draw_network_graph, 'pipe_home_page_data': pipe_home_page_data}
+    func_dispatcher = {
+                        'getNodeView': getNodeView, 
+                        'draw_network_graph': draw_network_graph, 
+                        'pipe_home_page_data': pipe_home_page_data,
+                        'configureNodeThroughputSamplingRate': configure_node_throughput_sampling_rate,
+                    }
     # # Finds func requested
     func = next(iter(request))
     # network_instance = decode_jsonpickle(request[func])
