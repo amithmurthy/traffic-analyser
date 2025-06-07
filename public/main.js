@@ -46,9 +46,11 @@ function createWindow() {
 
 app.on('ready', createWindow)
 
+// console.log('opening window')
+// app.on('ready', () => createWindow())
+
 
 // Quit when all windows are closed 
-
 app.on('window-all-closed', function() {
     //On OS X applications and their menu bar stay active
     // until the user quits explicitly with Cmd + Q

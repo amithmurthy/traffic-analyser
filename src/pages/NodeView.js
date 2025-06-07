@@ -35,7 +35,6 @@ const NodeView = () => {
     const request = {'getNodeView': params?.nodeId}
     
 
-
     if(!showPlot){
         window.electron.facadeAPI.sendRequest(request)
         window.electron.handle('getNodeView', (event,data) => function(event,data) {
@@ -50,7 +49,6 @@ const NodeView = () => {
             setShowPlot(true)
         })
     }
-   
 
     const toggleThroughput = () =>{
         setToggleByteRate(!toggleByteRate)
@@ -75,7 +73,6 @@ const NodeView = () => {
         })
     }
 
-
     return (
         <>
             <Sidebar pageWrapId={'page-wrap'} outerContainerId={'outer-container'} />
@@ -88,85 +85,84 @@ const NodeView = () => {
                         <Paper className={classes.paper}>
                         <h3> Node Flows  </h3>
                         <Plot
-                        data={[
-                            {
-                                x: flowScatterPlotData['input_duration'],
-                                y: flowScatterPlotData['input_size'],
-                                type: "scatter",
-                                mode: "markers",
-                                marker: {color: 'red'},
-                            },
-                            {
-                                x: flowScatterPlotData['output_duration'],
-                                y: flowScatterPlotData['output_size'],
-                                type: "scatter",
-                                mode: "markers",
-                                marker: {color: 'blue'},
-                            }
-                        ]}
-                        config={{responsive: true}}
-                        style={{ width: "100%", height: "100%" }}
+                            data={[
+                                {
+                                    x: flowScatterPlotData['input_duration'],
+                                    y: flowScatterPlotData['input_size'],
+                                    type: "scatter",
+                                    mode: "markers",
+                                    marker: {color: 'red'},
+                                    name: "Input Traffic"
+                                },
+                                {
+                                    x: flowScatterPlotData['output_duration'],
+                                    y: flowScatterPlotData['output_size'],
+                                    type: "scatter",
+                                    mode: "markers",
+                                    marker: {color: 'blue'},
+                                    name: "Output Traffic"
+                                }
+                            ]}
+                            
+                            config={{responsive: true}}
+                            style={{ width: "100%", height: "100%" }}
                         />
                         </Paper>
                     </Grid>
 
                     <Grid item xs={12} sm={6} md={3}>
                         <Paper className={classes.paper}>
-                        <div>
-                            <Grid container direction={'row'} spacing={2}>
-                            <Grid item>
-                                <Button onClick={toggleThroughput} variant="contained">Toggle throughput</Button>
-                            </Grid>
+                            <div>
+                                <Grid container direction={'row'} spacing={2}>
                                 <Grid item>
-                                    <div>
-                                    <FormControl sx={{ m: 1, minWidth: 80 }}>
-                                    <InputLabel> Sampling Rate</InputLabel>
-                                        <Select
-                                        value={samplingRate}
-                                        onChange={handleSamplingRateChange}
-                                        autoWidth
-                                        label="Sampling Rate"
-                                        >
-                                            {samplingRates.map((rate, index) => (<MenuItem value={rate.value} key={index}> {rate.name} </MenuItem>))}
-                                        </Select>
-                                    </FormControl>
-                                    </div>
+                                    <Button onClick={toggleThroughput} variant="contained"> Toggle throughput</Button>
                                 </Grid>
-                            </Grid>
-                        </div>
+                                    <Grid item>
+                                        <div>
+                                        <FormControl sx={{ m: 1, minWidth: 80 }}>
+                                        <InputLabel> Sampling Rate</InputLabel>
+                                            <Select
+                                            value={samplingRate}
+                                            onChange={handleSamplingRateChange}
+                                            autoWidth
+                                            label="Sampling Rate"
+                                            >
+                                                {samplingRates.map((rate, index) => (<MenuItem value={rate.value} key={index}> {rate.name} </MenuItem>))}
+                                            </Select>
+                                        </FormControl>
+                                        </div>
+                                    </Grid>
+                                </Grid>
+                            </div>
                             <Plot
-                            data={[
-                                {
-                                    x: inputTime,
-                                    y: toggleByteRate ? inputByteRate : inputPktRate,
-                                    type: "scatter",
-                                    mode: "lines",
-                                    fill: 'tozeroy',
-                                    marker: {color: 'red'},
-                                    line: {shape: 'spline', width: 2}
-                                },
-                                {
-                                    x: outputTime,
-                                    y: toggleByteRate ? outputByteRate : outputPktRate,
-                                    type: "scatter",
-                                    mode: "lines",
-                                    fill: 'tozeroy',
-                                    marker: {color: 'blue'},
-                                    line: {shape: 'spline', width: 2}
-
-                                }
-                            ]}
-                            config={{responsive: true}}
-                            style={{ width: "100%", height: "100%" }}
+                                data={[
+                                    {
+                                        x: inputTime,
+                                        y: toggleByteRate ? inputByteRate : inputPktRate,
+                                        type: "scatter",
+                                        mode: "lines",
+                                        fill: 'tozeroy',
+                                        marker: {color: 'red'},
+                                        line: {shape: 'spline', width: 2},
+                                        name: "Input Traffic"
+                                    },
+                                    {
+                                        x: outputTime,
+                                        y: toggleByteRate ? outputByteRate : outputPktRate,
+                                        type: "scatter",
+                                        mode: "lines",
+                                        fill: 'tozeroy',
+                                        marker: {color: 'blue'},
+                                        line: {shape: 'spline', width: 2},
+                                        name: "Output Traffic"
+                                    }
+                                ]}
+                                config={{responsive: true}}
+                                style={{ width: "100%", height: "100%" }}
                             />
-                            
                         </Paper>
                     </Grid>   
-
-
-                    
-
-            </Grid>
+                </Grid>
             </div>
             :
             <p> processing plot .... </p>

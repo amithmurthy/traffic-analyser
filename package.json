@@ -9,6 +9,7 @@
     "@material-ui/core": "^4.12.4",
     "@mui/icons-material": "^5.8.2",
     "@mui/material": "^5.8.2",
+    "@mui/x-data-grid": "^6.18.1",
     "@ramonak/react-progress-bar": "^4.4.0",
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.1.1",
@@ -45,7 +46,7 @@
     "eject": "react-scripts eject",
     "electron:serve": "concurrently -k \"cross-env BROWSER=none npm run start\" \"npm run electron:start\"",
     "electron:build": "npm run build && electron-builder -c.extraMetadata.main=build/main.js",
-    "electron:start": "wait-on tcp:3000 && electron ."
+    "electron:start": "electron ."
   },
   "build": {
     "extends": null,

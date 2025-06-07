@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  electron-app:
+    build:
+      context: ./
+    volumes:
+      - ./electron-app:/usr/src/app
+    depends_on:
+      - python-engine
+    ports:
+      - "3000:3000" # Replace with the port your Electron app uses
+    environment:
+      - PYTHON_ENGINE_URL=http://python-engine:5000
+
+  python-engine:
+    build:
+      context: ./engine
+    volumes:
+      - ./python-engine:/usr/src/app
+    ports:
+      - "5000:5000"

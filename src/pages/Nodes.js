@@ -4,10 +4,13 @@ const Nodes = () => {
 
 
     return (
-        <>
+        <div>
             <Sidebar pageWrapId={'page-wrap'} outerContainerId={'outer-container'} />
-            <h3> All Nodes Here </h3>
-        </>
+            <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
+
+                <h3> All Nodes Here </h3>
+            </div>
+        </div>
     )
 }
 
